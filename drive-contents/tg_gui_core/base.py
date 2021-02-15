@@ -230,8 +230,10 @@ class Widget:
             owner._nest_(self)
         return self
 
-    def __call__(self, *args):
-        self._place_(*args)
+    # placement sugar, still in flux
+    def __call__(self, pos_spec, dim_spec):
+        self._size_(dim_spec)
+        self._place_(pos_spec)
         return self
 
     def _nest_in_(self, superior):
@@ -285,25 +287,11 @@ class Widget:
             owner._nest_(self)
         return self
 
-    # placement sugar, still in flux
-    def __call__(self, coord, dims):
-        self._place_(coord, dims)
-        return self
-
-    def _place_(self, coord, dims):
-        assert self.isnested(), f"{self} must be nested to place it, it's not"
-
-        was_on_screen = self.isrendered()
-        if was_on_screen:  # if was_on_screen := self.isrendered()
-            self._derender_()
-
-        # get margin
-        mar = self._margin_
-        if mar is None:
-            self._margin_ = mar = self._screen_.default.margin
+    def _size_(self, dim_spec):
+        assert self.isnested(), f"{self} must be nested to size it, it's not"
 
         # format dims
-        width, height = dims
+        width, height = dim_spec
         if isinstance(width, DimensionSpecifier):
             width = width._calc_dim_(self)
         if isinstance(height, DimensionSpecifier):
@@ -311,12 +299,24 @@ class Widget:
 
         # make sure PositionSpecifiers have access to width/height
         self._placement_ = (None, None, width, height)
+        # TODO: shange this to spearate pos and size
+
+        # get margin
+        mar = self._margin_
+        if mar is None:
+            self._margin_ = mar = self._screen_.default.margin
+
+    def _place_(self, pos_spec):
+        assert self.issized(), f"{self} must be sized to place it, it's not"
 
         # format coord
-        if isinstance(coord, PositionSpecifier):
-            x, y = coord._calc_coord_(self)
+        if isinstance(pos_spec, PositionSpecifier):
+            x, y = pos_spec._calc_coord_(self)
         else:
-            x, y = coord
+            assert isinstance(pos_spec, tuple)
+            x, y = pos_spec
+
+        FUCK(TODO, "clean this up and separate it")
 
         if isinstance(x, PositionSpecifier):
             x = x._calc_x_(self)
@@ -336,6 +336,7 @@ class Widget:
         self._placement_ = placement = x, y, w, h = (x, y, width, height)
 
         # calc relative placement
+        rel = self._rel_placement_
         self._rel_placement_ = rel_placement = (
             mar + x,
             mar + y,
@@ -380,6 +381,7 @@ class Widget:
         self._rel_placement_ = None
         self._phys_coord = None
 
+    # TODO: Change this to spearate placemtn into size and position ?
     # coordinates and dimension getters
     coord = property(lambda self: self._placement_[0:2])
     _rel_coord_ = property(lambda self: self._rel_placement_[0:2])
