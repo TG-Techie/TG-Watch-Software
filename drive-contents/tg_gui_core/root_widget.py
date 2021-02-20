@@ -54,7 +54,11 @@ class RootWrapper(Container):
         return self._root_wid_inst
 
     def _place_(self, coord: int, dims: int):
+        raise NotImplementedError()
         assert dims > (0, 0), f"root's dims must be > (0, 0), found {dims}"
+
+        if self._superior_ is None and (x < 0 or y < 0):
+            raise ValueError(f"right aligned coord cannot be used with root widgets")
 
         was_on_screen = self.isrendered()
         if was_on_screen:

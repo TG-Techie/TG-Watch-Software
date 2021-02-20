@@ -166,22 +166,31 @@ class Screen:
         raise AttributeError(f"unable to get attribute `.{name}`")
 
     # platform tie-in functions
-    def on_widget_nest_in(self, wid: "Widget"):
+
+    def on_widget_nest_in(_, wid: "Widget"):
         pass
 
-    def on_widget_unnest_from(self, wid: "Widget"):
+    def on_widget_unnest_from(_, wid: "Widget"):
         pass
 
-    def on_widget_render(self, wid: "Widget"):
+    def on_widget_render(_, wid: "Widget"):
         pass
 
-    def on_widget_derender(self, wid: "Widget"):
+    def on_widget_derender(_, wid: "Widget"):
         pass
 
-    def on_container_place(self, wid: "Widget"):
+    def on_widget_show(_, wid: "Widget"):
         pass
 
-    def on_container_pickup(self, wid: "Widget"):
+    def on_widget_hide(_, wid: "Widget"):
+        pass
+
+    # container tie-ins
+
+    def on_container_place(_, wid: "Widget"):
+        pass
+
+    def on_container_pickup(_, wid: "Widget"):
         pass
 
     def on_container_render(_, widget: "Widget"):
@@ -199,28 +208,30 @@ class Widget:
         global Widget
         self._id_ = uid()
 
-        self._superior_ = None  # type: Optional[superior]
+        self._superior_ = None
         self._screen_ = None
 
-        self._placement_ = None  # type: Optional[Tuple[x, y, width, height]]
-        self._rel_placement_ = None
-        self._phys_coord = None
+        self._size_ = None
+        self._phys_size_ = None
+
+        self._coord_ = None
+        self._rel_coord_ = None
+        self._phys_coord_ = None
+
+        self._is_shown = False
 
         self._margin_ = margin
 
-        self._rendered_ = False
+    dims = property(lambda self: self._size_)
+    width = property(lambda self: self._size_[0])
+    height = property(lambda self: self._size_[1])
+
+    coord = property(lambda self: self._coord_)
+    x = property(lambda self: self._coord_[0])
+    y = property(lambda self: self._coord_[1])
 
     def __repr__(self):
         return f"<{type(self).__name__} {self._id_}>"
-
-    def isnested(self):
-        return self._superior_ is not None
-
-    def isplaced(self):
-        return self._placement_ is not None  # and self.isnested()
-
-    def isrendered(self):
-        return self._rendered_
 
     def __get__(self, owner, ownertype=None):
         """
@@ -235,6 +246,21 @@ class Widget:
         self._size_(dim_spec)
         self._place_(pos_spec)
         return self
+
+    def isnested(self):
+        return bool(self._superior_ is not None)
+
+    def isformed(self):
+        return bool(self._coord_ is not None)
+
+    def isplaced(self):
+        return self._placement_ is not None  # and self.isnested()
+
+    def isrendered(self):
+        return self.isnested() and self._screen_.widget_is_rendered(self)
+
+    def isshowing(self):
+        return self._is_shown
 
     def _nest_in_(self, superior):
         """
@@ -257,6 +283,7 @@ class Widget:
                 f"{self} already nested in {current}, " + f"cannot nest in {superior}"
             )
 
+        self._on_any_nest()
         self._on_nest_()
 
     def _unnest_from_(self, superior):
@@ -271,24 +298,12 @@ class Widget:
             self._superior_ = None
         else:
             raise RuntimeError(
-                f"cannot unnest {self} from {superior}, nested in {self._superior_}"
+                f"cannot unnest {self} from {superior}, it is nested in {self._superior_}"
             )
 
-    def _on_nest_(self):
-        pass
-
-    def _on_unnest_(self):
-        pass
-
-    # auto nesting, only for layouts, etc
-    # list, zstacks, and others will need to manually nest in their __init__s
-    def __get__(self, owner, ownertype=None):
-        if not self.isnested():
-            owner._nest_(self)
-        return self
-
-    def _size_(self, dim_spec):
+    def _form_(self, dim_spec):
         assert self.isnested(), f"{self} must be nested to size it, it's not"
+        assert not self.isformed()
 
         # format dims
         width, height = dim_spec
@@ -297,17 +312,25 @@ class Widget:
         if isinstance(height, DimensionSpecifier):
             height = height._calc_dim_(self)
 
-        # make sure PositionSpecifiers have access to width/height
-        self._placement_ = (None, None, width, height)
-        # TODO: shange this to spearate pos and size
+        margin = self._marign_
+        if margin is None:
+            margin = self._screen_.default.margin
 
-        # get margin
-        mar = self._margin_
-        if mar is None:
-            self._margin_ = mar = self._screen_.default.margin
+        if isinstance(margin_spec, DimensionSpecifier):
+            margin = margin._calc_dim_(self)
+
+        # make sure PositionSpecifiers have access to width/height
+        self._size_ = (width, height)
+        self._phys_size_ = (width - margin * 2, height - margin * 2)
+
+    def _deform_(self):
+        assert self.isformed()
+        self._size_ = None
+        self._phys_size_ = None
 
     def _place_(self, pos_spec):
-        assert self.issized(), f"{self} must be sized to place it, it's not"
+        assert self.isformed(), f"{self} must be sized to place it, it's not"
+        assert not self.isplaced()
 
         # format coord
         if isinstance(pos_spec, PositionSpecifier):
@@ -316,61 +339,56 @@ class Widget:
             assert isinstance(pos_spec, tuple)
             x, y = pos_spec
 
-        FUCK(TODO, "clean this up and separate it")
-
         if isinstance(x, PositionSpecifier):
             x = x._calc_x_(self)
         if isinstance(y, PositionSpecifier):
             y = y._calc_y_(self)
 
-        if self._superior_ is None and (x < 0 or y < 0):
-            raise ValueError(f"right aligned coord cannot be used with root widgets")
-
-        # adjust
+        # adjust to right aligned for negative numbers
         if x < 0:
-            x = self._superior_.width - width + 1 + x
+            x = self._superior_.width - self.width + 1 + x
         if y < 0:
-            y = self._superior_.height - height + 1 + y
+            y = self._superior_.height - self.height + 1 + y
 
-        # save
-        self._placement_ = placement = x, y, w, h = (x, y, width, height)
+        # calc and store the placements
+        margin = self._margin_
+        spr_x, spr_y = self._superior_._phys_coord_
 
-        # calc relative placement
-        rel = self._rel_placement_
-        self._rel_placement_ = rel_placement = (
-            mar + x,
-            mar + y,
-            w - (2 * mar),
-            h - (2 * mar),
-        )
-        rx, ry, rw, rh = rel_placement
-
-        # calc absolute physical placement
-        supx, supy = self._superior_._phys_coord_
-        self._phys_coord_ = (supx + rx, supy + ry)
-        self._phys_end_coord = (supx + rx + rw, supy + ry + rh)
-
-        if was_on_screen:
-            self._render_()
+        self._coord_ = (x, y)
+        self._rel_coord_ = (x + margin, y + margin)
+        self._phys_coord_ = (spr_x + rx, spr_y + ry)
 
     def _pickup_(self):
         assert not self.isrendered()
         assert self.isplaced()
         # only containers need to worry about when to cover vs replace
-        self._placement_ = None
-        self._rel_placement_ = None
+        self._coord_ = None
+        self._rel_coord_ = None
         self._phys_coord_ = None
 
     def _render_(self):
         assert self.isplaced()
-        self._rendered_ = True
-        screen = self._screen_
-        screen.on_widget_render(self)  # platform tie-in
+        self._screen_.on_widget_render(self)  # platform tie-in
 
     def _derender_(self):
         assert self.isrendered()
         self._screen_.on_widget_derender(self)  # platform tie-in
-        self._rendered_ = False
+
+    def _show_(self):
+        assert self.isnested()
+        self._is_shown = True
+        self._screen_.on_widget_show(self)
+
+    def _hide_(self):
+        assert self.isshowing()
+        self._is_shown = False
+        self._screen_.on_widget_hide(self)
+
+    def _on_nest_(self):
+        pass
+
+    def _on_unnest_(self):
+        pass
 
     def __del__(self):
         # remove double links
@@ -380,29 +398,6 @@ class Widget:
         self._placement_ = None
         self._rel_placement_ = None
         self._phys_coord = None
-
-    # TODO: Change this to spearate placemtn into size and position ?
-    # coordinates and dimension getters
-    coord = property(lambda self: self._placement_[0:2])
-    _rel_coord_ = property(lambda self: self._rel_placement_[0:2])
-    #!!  _phys_coord_ uses raw exposed tuple for
-
-    dims = property(lambda self: self._placement_[2:4])
-    _phys_dims_ = property(lambda self: self._rel_placement_[2:4])
-
-    x = property(lambda self: self._placement_[0])
-    _rel_x_ = property(lambda self: self._rel_placement_[0])
-    _phys_x_ = property(lambda self: self._phys_coord_[0])
-
-    y = property(lambda self: self._placement_[1])
-    _rel_y_ = property(lambda self: self._rel_placement_[1])
-    _phys_y_ = property(lambda self: self._phys_coord_[1])
-
-    width = property(lambda self: self._placement_[2])
-    _phys_width_ = property(lambda self: self._rel_placement_[2])
-
-    height = property(lambda self: self._placement_[3])
-    _phys_height_ = property(lambda self: self._rel_placement_[3])
 
 
 class Container(Widget):
@@ -433,15 +428,25 @@ class Container(Widget):
         while widget in self._nested_:
             self._nested_.remove(widget)
 
-    def _place_(self, coord, dims):
+    def _size_(self, dim_spec):
+        super()._size_(dim_spec)
+        self._size_nested_()
+        self._screen_.on_container_size(self)
+
+    def _place_(self, dim_spec):
         super()._place_(coord, dims)
         self._place_nested_()
         self._screen_.on_container_place(self)
 
-    def _pickup_(self, visual):
+    def _pickup_(self):
         self._screen_.on_container_pickup(self)
         self._pickup_nested_()
-        super()._pickup_(visual)
+        super()._pickup_()
+
+    def _desize_(self):
+        self._screen_.on_container_desize(self)
+        self._desize_nested_()
+        super()._desize_(self)
 
     def _render_(self):
         super()._render_()
@@ -451,14 +456,14 @@ class Container(Widget):
         super()._derender_()
         self._derender_nested_()
 
-    def _render_nested_(self):
+    def _size_nested_(self):
         raise NotImplementedError(
-            f"{type(self).__name__}._render_nested_ not implemented"
+            f"{type(self).__name__}._size_nested_ not implemented"
         )
 
-    def _derender_nested_(self):
+    def _desized_nested_(self):
         raise NotImplementedError(
-            f"{type(self).__name__}._derender_nested_ not implemented"
+            f"{type(self).__name__}._desized_nested_ not implemented"
         )
 
     def _place_nested_(self):
@@ -469,6 +474,16 @@ class Container(Widget):
     def _pickup_nested_(self):
         raise NotImplementedError(
             f"{type(self).__name__}._pickup_nested_ not implemented"
+        )
+
+    def _render_nested_(self):
+        raise NotImplementedError(
+            f"{type(self).__name__}._render_nested_ not implemented"
+        )
+
+    def _derender_nested_(self):
+        raise NotImplementedError(
+            f"{type(self).__name__}._derender_nested_ not implemented"
         )
 
     def __del__(self):
