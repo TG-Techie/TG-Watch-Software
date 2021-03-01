@@ -119,11 +119,11 @@ class power:
         if now - power._last > 1:
             try:
                 raw = drivers.bat_sensor.cell_percent
-                display._physical_scale = (0.3, 0.8) if raw <= 20 else (0.2, 1.0)
                 display.brightness.update(display.brightness._value)
                 scaled = 100.0 * min(
                     max(0, raw - power._min_percent) / power._percent_range, 1.0
                 )
+                display._phys_limits = (0.1, 0.5) if scaled <= 20.0 else (0.2, 1.0)
                 power.bat_percent.update(scaled)
                 power._last = now
             except RuntimeError as err:
