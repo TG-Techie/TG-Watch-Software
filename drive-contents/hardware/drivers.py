@@ -63,7 +63,7 @@ try:
 
     touchscreen = Adafruit_FocalTouch(ports.i2c)
 
-    backlight = PWMOut(board.BACKLIGHT)
+    backlight = PWMOut(board.BACKLIGHT, frequency=200)
     backlight.duty_cycle = 65535
 
     rtc = DS3231(ports.i2c)
