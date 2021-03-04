@@ -90,22 +90,12 @@ class shade(Pages):
             back = self.back((left, top), (self.width // 4, self.height // 4))
 
         def _render_(self):
-            # print("torch rendered")
-            shade.temp_brightness = display.brightness._value
+            shade.temp_brightness = display.brightness.value()
             display.brightness.update(1.0)
 
-            Widget._render_(self)
-            for wid in self._nested_:
-                if wid.isplaced():
-                    wid._render_()
-            self._screen_.on_container_render(self)
+            super()._render_()
 
         def _derender_(self):
-            # print("torch derendered")
-            display.brightness.update(shade.temp_brightness)
+            super()._derender_()
 
-            for wid in self._nested_:
-                if wid.isplaced():
-                    wid._derender_()
-            Widget._derender_(self)
-            self._screen_.on_container_derender(self)
+            display.brightness.update(shade.temp_brightness)
