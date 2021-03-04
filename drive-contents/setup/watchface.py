@@ -23,6 +23,12 @@ class default_face(Layout):
         _alignment=align.trailing,
     )
 
+    charge_indicator = Label(
+        text=DerivedState(power.charging, lambda c: f" {c:1}  "),
+        size=3,
+        _alignment=align.leading,
+    )
+
     time_lbl = Label(size=7, text=timestr)
     date_lbl = Label(size=3, text=datestr)
 
@@ -58,3 +64,4 @@ class default_face(Layout):
         # other = self.other_but((left, bottom), launch_size)
 
         self.percent((right, top), (self.width // 3, self.height // 6))
+        self.charge_indicator((left, top), (self.width // 3, self.height // 6))
