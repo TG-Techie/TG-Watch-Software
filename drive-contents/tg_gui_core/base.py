@@ -132,6 +132,18 @@ class Defaults:
         self._selected_text_ = _selected_text_
 
 
+layout_class = ConstantGroup(
+    "size_class",
+    (
+        "wearable",
+        "portrait",
+        "landscape",
+        "desktop",
+        "custom",
+    ),
+)
+
+
 class Screen:
     def __init__(
         self,
@@ -218,6 +230,7 @@ class Widget:
         self._rel_coord_ = None
         self._phys_coord_ = None
 
+        self._is_linked = False
         self._is_shown = False
 
         self._margin_ = margin
@@ -243,9 +256,15 @@ class Widget:
 
     # placement sugar, still in flux
     def __call__(self, pos_spec, dim_spec):
-        self._size_(dim_spec)
+        self._form_(dim_spec)
         self._place_(pos_spec)
+        self._link()
         return self
+
+    def _setup_(self, pos_spec, dim_spec):
+        self._form_(dim_spec)
+        self._place_(pos_spec)
+        self._link()
 
     def isnested(self):
         return bool(self._superior_ is not None)
@@ -255,6 +274,9 @@ class Widget:
 
     def isplaced(self):
         return self._placement_ is not None  # and self.isnested()
+
+    def islinked(self):
+        return self._is_linked is True
 
     def isrendered(self):
         return self.isnested() and self._screen_.widget_is_rendered(self)
@@ -286,11 +308,13 @@ class Widget:
         self._on_any_nest()
         self._on_nest_()
 
-    def _unnest_from_(self, superior):
+    def _unnest_from_(self, superior=None):
         """
         Called by superiors to un-link the (now-ex) subordinate from the superior
         """
-        if self._superior_ is superior:
+        if superior is None:
+            superior = self._superior_
+        if superior is self._superior_:
             # platform tie-in
             self._screen_.on_widget_unnest_from(self)
             # clear out data
@@ -344,7 +368,7 @@ class Widget:
         if isinstance(y, PositionSpecifier):
             y = y._calc_y_(self)
 
-        # adjust to right aligned for negative numbers
+        # for negative numbers adjust to right aligned
         if x < 0:
             x = self._superior_.width - self.width + 1 + x
         if y < 0:
@@ -365,6 +389,12 @@ class Widget:
         self._coord_ = None
         self._rel_coord_ = None
         self._phys_coord_ = None
+
+    def _link_(self):
+        self._is_linked = True
+
+    def _unlink_(self):
+        self._is_linked = False
 
     def _render_(self):
         assert self.isplaced()
@@ -428,43 +458,43 @@ class Container(Widget):
         while widget in self._nested_:
             self._nested_.remove(widget)
 
-    def _size_(self, dim_spec):
-        super()._size_(dim_spec)
-        self._size_nested_()
-        self._screen_.on_container_size(self)
+    def _form_(self, dim_spec):
+        super()._form_(dim_spec)
+        raise NotImplementedError(f"{type(self).__name__}._form_ not implemented")
+
+    def _deform_(self):
+        super()._deform_()
+        raise NotImplementedError(f"{type(self).__name__}._deform_ not implemented")
 
     def _place_(self, dim_spec):
         super()._place_(coord, dims)
         self._place_nested_()
-        self._screen_.on_container_place(self)
 
     def _pickup_(self):
-        self._screen_.on_container_pickup(self)
         self._pickup_nested_()
         super()._pickup_()
-
-    def _desize_(self):
-        self._screen_.on_container_desize(self)
-        self._desize_nested_()
-        super()._desize_(self)
 
     def _render_(self):
         super()._render_()
         self._render_nested_()
+        self._screen_.on_container_render(self)
 
     def _derender_(self):
         super()._derender_()
-        self._derender_nested_()
+        self._screen_.on_container_derender(self)
+        # self._derender_nested_()
+        for widget in self._nested_:
+            if widget.isrendered():
+                widget._derender_()
 
-    def _size_nested_(self):
-        raise NotImplementedError(
-            f"{type(self).__name__}._size_nested_ not implemented"
-        )
+    # def _form_nested_(self):
+    #     raise NotImplementedError(
+    #         f"{type(self).__name__}._form_nested_ not implemented"
+    #     )
 
-    def _desized_nested_(self):
-        raise NotImplementedError(
-            f"{type(self).__name__}._desized_nested_ not implemented"
-        )
+    # def _deform_nested_(self):
+    #         f"{type(self).__name__}._deform_nested_ not implemented"
+    #     )
 
     def _place_nested_(self):
         raise NotImplementedError(
@@ -481,10 +511,10 @@ class Container(Widget):
             f"{type(self).__name__}._render_nested_ not implemented"
         )
 
-    def _derender_nested_(self):
-        raise NotImplementedError(
-            f"{type(self).__name__}._derender_nested_ not implemented"
-        )
+    # def _derender_nested_(self):
+    #     raise NotImplementedError(
+    #         f"{type(self).__name__}._derender_nested_ not implemented"
+    #     )
 
     def __del__(self):
         super().__del__()

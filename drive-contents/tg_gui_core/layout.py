@@ -20,56 +20,47 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from .base import Container, Widget
-from .layout_classes import *
+from .base import Container, Widget, layout_class
+
+_layout_class_to_method_name = {
+    layout_class.wearable: "_wearable_",
+    layout_class.portrait: "_portrait_",
+    layout_class.landscape: "_landscape_",
+    layout_class.desktop: "_desktop_",
+    layout_class.custom: "_custom_",
+}
 
 
 class Layout(Container):
-    def _render_(self):
-        Widget._render_(self)
-        for wid in self._nested_:
-            if wid.isplaced():
-                wid._render_()
-        self._screen_.on_container_render(self)
+    def _form_(self, dim_spec):
+        super(Container, self)._form_(dim_spec)
 
-    def _derender_(self):
-        for wid in self._nested_:
-            if wid.isplaced():
-                wid._derender_()
-        Widget._derender_(self)
-        self._screen_.on_container_derender(self)
+    def _deform_(self, dim_spec):
+        super(Container, self)._deform_()
 
-    def _place_(self, coord, dims):
-        Widget._place_(self, coord, dims)
+    def _place_(self, pos_spec):
+        global _layout_class_to_method_name
+        super(Container, self)._form_(self, pos_spec)
 
         layoutcls = self._screen_.layout_class
 
-        if layoutcls is LayoutCls.wearable:
-            if hasattr(self, "_wearable_"):
-                self._wearable_()
-            else:
-                self._any_()
-        elif isinstance(layoutcls, LayoutCls.mobile):
-            if hasattr(self, "_mobile_"):
-                self._mobile_(layoutcls.width, layoutcls.height)
-            else:
-                self._any_()
+        for cls, method_name in _layout_class_to_method_name.values():
+            if layoutcls is cls:
+                if hasattr(self, method_name):
+                    getattr(self, method_name)()
+                else:
+                    self._any_()
+                break
         else:
-            raise ValueError(
-                f"unknown LayoutCls variant or object, {type(layoutcls)}"
+            raise RuntimeError(
+                f"{layoutcls} is not a valid layout class, no corresonding method"
             )
 
-        self._screen_.on_container_place(self)
-
-    def _pickup_(self):
+    def _render_(self):
         self._screen_.on_container_pickup(self)
         for wid in self._nested_:
             wid._pickup_()
         Widget._pickup_(self)
-
-    def _relayout_proto_(self):
-        self._layout_()
-        self._unlayout_()
 
     def _any_(self):
         raise NotImplementedError(

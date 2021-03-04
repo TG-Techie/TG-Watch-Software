@@ -75,25 +75,25 @@ class DisplayioScreen(Screen):
 
         if wid in self._selectbles_:
             self._selectbles_.remove(wid)
-        if wid in self._selectbles_:
-            raise RuntimeError(f"double _selectbles_ error {wid}")
+            if wid in self._selectbles_:
+                raise RuntimeError(f"double _selectbles_ error {wid}")
 
         if wid in self._pressables_:
             self._pressables_.remove(wid)
-        if wid in self._pressables_:
-            raise RuntimeError(f"double _pressables_ error {wid}")
+            if wid in self._pressables_:
+                raise RuntimeError(f"double _pressables_ error {wid}")
 
         if wid in self._updateables_:
             self._updateables_.remove(wid)
-        if wid in self._updateables_:
-            raise RuntimeError(f"double _updateables_ error {wid}")
+            if wid in self._updateables_:
+                raise RuntimeError(f"double _updateables_ error {wid}")
 
-    def on_container_place(_, wid: Widget):
+    def on_container_render(_, wid: Widget):
         if hasattr(wid, "_nest_count_override"):
             wid._group = Group(
                 x=wid._rel_x_,
                 y=wid._rel_y_,
-                max_size=max(wid._nest_count_override),
+                max_size=wid._nest_count_override,
             )
         else:
             wid._group = Group(
@@ -106,16 +106,16 @@ class DisplayioScreen(Screen):
             )
         wid._screen_._root_.refresh_whole()
 
-    def on_container_pickup(_, wid: Widget):
+    def on_container_derender(_, wid: Widget):
         del wid._group
         wid._group = None
 
-    def on_container_render(_, wid: Widget, _full_refresh=False):
+    def on_widget_show(_, wid: Widget, _full_refresh=False):
         pass
         if _full_refresh:
             wid._screen_._root_.refresh_whole()
 
-    def on_container_derender(_, wid: Widget):
+    def on_widget_hide(_, wid: Widget):
         pass
         # if isinstance(wid, Pages):
         #     wid._screen_._root_.refresh_whole()
