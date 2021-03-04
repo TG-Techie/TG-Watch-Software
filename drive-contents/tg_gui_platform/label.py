@@ -87,6 +87,6 @@ class Label(Widget):
 
     def _update_text(self, text):
 
-        while len(text) <= 1:
+        while len(text) <= 3:
             text = f" {text} "
         self._group.text = text
