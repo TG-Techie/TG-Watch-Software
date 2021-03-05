@@ -7,7 +7,7 @@ from tg_gui_std.all import Rect, Pages, PageState
 from setup.watchface import default_face
 from setup.watchshade import shade
 
-APP_TO_LOAD = "tgl_test"
+APP_TO_LOAD = "hex_mixer"
 
 apps = {}
 appfolders = os.listdir("/apps")
