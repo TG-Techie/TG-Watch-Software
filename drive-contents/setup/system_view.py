@@ -8,14 +8,25 @@ from setup.watchface import default_face
 from setup.watchshade import shade
 
 # scan and choose an app to load
-PREFERED_APP_TO_LOAD = None  # None for auto
+apps_dir_contents = os.listdir("/apps")
 
-availble_apps = [app_dir for app_dir in os.listdir("/apps")]
+# if there is a preferred.txt read it in
+if "preferred.txt" in apps_dir_contents:
+    with open("apps/preferred.txt", "r") as preferred_app:
+        preferred_app_to_load = preferred_app.read().strip()
+    if len(preferred_app_to_load) == 0:
+        preferred_app_to_load = None
+else:
+    preferred_app_to_load = None
+
+# filter for file
+availble_apps = [app_dir for app_dir in apps_dir_contents if "." not in app_dir]
+# filter for public apps
 public_apps = [app_dir for app_dir in availble_apps if not app_dir.startswith("_")]
 
-if (PREFERED_APP_TO_LOAD in availble_apps) or (len(public_apps) > 0):
-    if PREFERED_APP_TO_LOAD in availble_apps:
-        app_dir = PREFERED_APP_TO_LOAD
+if (preferred_app_to_load in availble_apps) or (len(public_apps) > 0):
+    if preferred_app_to_load in availble_apps:
+        app_dir = preferred_app_to_load
     else:
         app_dir = public_apps[0]
     app_module = __import__(f"/apps/{app_dir}")
