@@ -2,35 +2,36 @@ import gc
 import os
 
 from tg_gui_core import *
-from tg_gui_std.all import Rect, Pages, PageState
+from tg_gui_std.all import Rect, Pages, PageState, Label
 
 from setup.watchface import default_face
 from setup.watchshade import shade
 
-APP_TO_LOAD = "hex_mixer"
+# scan and choose an app to load
+PREFERED_APP_TO_LOAD = None  # None for auto
 
-apps = {}
-appfolders = os.listdir("/apps")
-for app in (app for app in appfolders if not app.startswith("_")):
-    # with open(f"/apps/{app}/info.json") as file:
-    #     try:
-    #         info = json.load(file)
-    #     except:
-    #         print(f"unable to load app info {file(file)}")
-    #         continue
-    mod = __import__(f"/apps/{app}")
-    app_obj = mod.Application
-    del mod
-    apps[app] = app_obj
-    # launch_widget = LaunchWidget.frominfo(f"/apps/{app}", info)
-    # apps[app] = launch_widget
+availble_apps = [app_dir for app_dir in os.listdir("/apps")]
+public_apps = [app_dir for app_dir in availble_apps if not app_dir.startswith("_")]
 
-app_page_state = PageState(0)
-app_pages = Pages(
-    show=app_page_state,
-    pages=(apps[APP_TO_LOAD],),  # tuple(apps.values()),
-    # _buffered=False,
-)
+if (PREFERED_APP_TO_LOAD in availble_apps) or (len(public_apps) > 0):
+    if PREFERED_APP_TO_LOAD in availble_apps:
+        app_dir = PREFERED_APP_TO_LOAD
+    else:
+        app_dir = public_apps[0]
+    app_module = __import__(f"/apps/{app_dir}")
+    app_widget = app_module.Application
+else:
+    app_widget = Label(text="No App Loaded")
+
+
+# for later
+# apps = {}
+# for app in availble_apps:
+#     if not app.startswith("_"):
+#         mod = __import__(f"/apps/{app}")
+#         app_obj = mod.Application
+#         del mod
+#         apps[app] = app_obj
 
 
 class SystemView(Pages):
@@ -44,8 +45,11 @@ class SystemView(Pages):
     face = default_face
     shade = shade
 
-    app_page = app_page_state
-    apptray = app_pages
+    app_page = PageState(0)
+    apptray = Pages(
+        show=app_page,
+        pages=(app_widget,),
+    )
 
     open_stack = []
 
