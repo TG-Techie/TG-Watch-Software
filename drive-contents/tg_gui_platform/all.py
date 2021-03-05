@@ -26,3 +26,4 @@ from .label import Label
 from .button import Button
 from .progress_bar import ProgressBar
 from .slider import Slider
+from .toggle import Toggle
