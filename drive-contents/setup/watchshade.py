@@ -102,9 +102,6 @@ class shade(Pages):
                 (7 * self.width // 24, 7 * self.height // 24),
             )
 
-        def _press_(self):
-            shade.page = shade.main_shade
-
         def _render_(self):
             shade.temp_brightness = display.brightness.value()
             display.brightness.update(1.0)
