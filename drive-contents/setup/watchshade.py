@@ -1,4 +1,5 @@
 from tg_gui_std.all import *
+from tg_gui_std.pages import _PageStateModes  # hack until internal changes
 from system.applocals import *
 
 import time
@@ -18,7 +19,7 @@ def _should_be_sys_reset():
 
 @singleinstance
 class shade(Pages):
-    page = PageState(0)
+    page = PageState(0, mode=_PageStateModes.page_widget)
 
     temp_brightness = None
 
@@ -39,6 +40,12 @@ class shade(Pages):
         else:
             self.page = self.main_shade
         # print(self.open_stack)
+
+    def _render_(self):
+        print(self, self.page)
+        if self.page is self.torch_panel:
+            self.page = self.main_shade
+        super()._render_()
 
     @singleinstance
     class main_shade(Layout):
@@ -80,32 +87,31 @@ class shade(Pages):
 
     @singleinstance
     class torch_panel(Layout):
-        back = Button(text="<", press=self._superior_.pop_view())
-        fill = State(color.white)
+        back = Button(
+            text="<",
+            press=self._superior_.pop_view(),
+            margin=default.margin * 2,
+        )
 
-        rect = Rect(fill=fill)
+        rect = Rect(fill=color.white)
 
         def _any_(self):
             r = self.rect((0, 0), (self.height, self.width))
-            back = self.back((left, top), (self.width // 4, self.height // 4))
+            back = self.back(
+                (left, top),
+                (7 * self.width // 24, 7 * self.height // 24),
+            )
+
+        def _press_(self):
+            shade.page = shade.main_shade
 
         def _render_(self):
-            # print("torch rendered")
-            shade.temp_brightness = display.brightness._value
+            shade.temp_brightness = display.brightness.value()
             display.brightness.update(1.0)
 
-            Widget._render_(self)
-            for wid in self._nested_:
-                if wid.isplaced():
-                    wid._render_()
-            self._screen_.on_container_render(self)
+            super()._render_()
 
         def _derender_(self):
-            # print("torch derendered")
-            display.brightness.update(shade.temp_brightness)
+            super()._derender_()
 
-            for wid in self._nested_:
-                if wid.isplaced():
-                    wid._derender_()
-            Widget._derender_(self)
-            self._screen_.on_container_derender(self)
+            display.brightness.update(shade.temp_brightness)
