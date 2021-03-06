@@ -33,6 +33,8 @@ from setup.watchsetup import (
 
 from tg_gui_std.all import Pages, PageState
 from tg_gui_std.all import *
+import system
+from system import clock
 
 print(gc.mem_free())
 
@@ -44,68 +46,120 @@ print(gc.mem_free())
 SWIPE_HEIGHT = const(15)
 SWIPE_WIDTH = const(20)
 
-#
-# @DisplayioRootWrapper(screen=screen, display=display, size=(240, 240))
-# class WatchRoot(Layout):
-#     value = State(0.5)
-#     indicator = State(False)
-#
-#     split = VSplit(
-#         HSplit(
-#             Label(text=value >> (lambda s: f"{round(s, 3)}")),
-#             ProgressBar(progress=value),
-#         ),
-#         Slider(value=value),
-#         HSplit(
-#             Rect(fill=indicator >> (lambda i: color.green if i else color.red)),
-#             Hide(Rect(), when=~indicator),
-#         ),
-#         Button(text="foo", press=self.toggle_color),
-#     )
-#
-#     def _any_(self):
-#         split = self.split(center, (self.width, self.height))
-#
-#     def toggle_color(self):
-#         self.indicator = not self.indicator
-#
+debug_new = True
+if debug_new:
+
+    @DisplayioRootWrapper(screen=screen, display=display, size=(240, 240))
+    class WatchRoot(Layout):
+        @singleinstance
+        class switcher(Pages):
+            page = PageState(self.page2)
+
+            page1 = Rect(fill=color.red)
+
+            @singleinstance
+            class page2(Layout):
+                value = State(0.5)
+                indicator = State(False)
+                timestr = DerivedState(
+                    (clock.hours, clock.mins), lambda h, m: f"{h:02}:{m:02}"
+                )
+
+                split = VSplit(
+                    HSplit(
+                        Label(text=value >> (lambda s: f"{round(s, 3)}")),
+                        ProgressBar(progress=value),
+                    ),
+                    Slider(value=value),
+                    HSplit(
+                        Label(text=timestr),
+                        # Rect(fill=indicator >> (lambda i: color.green if i else color.red)),
+                        Hide(Rect(), when=~indicator),
+                    ),
+                    Button(text="foo", press=self.toggle_color),
+                )
+
+                def _any_(self):
+                    split = self.split(center, (self.width, self.height))
+
+                def toggle_color(self):
+                    self.indicator = not self.indicator
+
+        switch_but = Button(text="switch", press=self.switch())
+
+        def _any_(self):
+            self.switcher(top, (self.width, 3 * self.height // 4))
+            self.switch_but(bottom, (self.width, self.height // 4))
+
+        def switch(self):
+            switcher = self.switcher
+            switcher.page = (
+                switcher.page1 if switcher.page == switcher.page2 else switcher.page2
+            )
+
+    # @DisplayioRootWrapper(screen=screen, display=display, size=(240, 240))
+    # class WatchRoot(Layout):
+    #     value = State(0.5)
+    #     indicator = State(False)
+    #     timestr = DerivedState((clock.hours, clock.mins), lambda h, m: f"{h:02}:{m:02}")
+    #
+    #     split = VSplit(
+    #         HSplit(
+    #             Label(text=value >> (lambda s: f"{round(s, 3)}")),
+    #             ProgressBar(progress=value),
+    #         ),
+    #         Slider(value=value),
+    #         HSplit(
+    #             Label(text=timestr),
+    #             # Rect(fill=indicator >> (lambda i: color.green if i else color.red)),
+    #             Hide(Rect(), when=~indicator),
+    #         ),
+    #         Button(text="foo", press=self.toggle_color),
+    #     )
+    #
+    #     def _any_(self):
+    #         split = self.split(center, (self.width, self.height))
+    #
+    #     def toggle_color(self):
+    #         self.indicator = not self.indicator
 
 
-@DisplayioRootWrapper(screen=screen, display=display, size=(240, 240))
-class WatchRoot(Layout):
+else:
 
-    swipeup = Widget(margin=0)
-    swipedown = Widget(margin=0)
-    swipeleft = Widget(margin=0)
-    swiperight = Widget(margin=0)
-    system_view = SystemView()
+    @DisplayioRootWrapper(screen=screen, display=display, size=(240, 240))
+    class WatchRoot(Layout):
 
-    def _wearable_(self):
-        view = self.system_view((left, top), self.dims)
-        self.swipeup((0, 240), (self.width, SWIPE_HEIGHT))
-        self.swipedown((0, 0), (self.width, SWIPE_HEIGHT))
-        self.swipeleft((240, 0), (SWIPE_WIDTH, self.height))
-        self.swiperight((0, 0), (SWIPE_WIDTH, self.height))
+        swipeup = Widget(margin=0)
+        swipedown = Widget(margin=0)
+        swipeleft = Widget(margin=0)
+        swiperight = Widget(margin=0)
+        system_view = SystemView()
 
+        def _wearable_(self):
+            view = self.system_view((left, top), self.dims)
+            self.swipeup((0, 240), (self.width, SWIPE_HEIGHT))
+            self.swipedown((0, 0), (self.width, SWIPE_HEIGHT))
+            self.swipeleft((240, 0), (SWIPE_WIDTH, self.height))
+            self.swiperight((0, 0), (SWIPE_WIDTH, self.height))
 
-swipeup = WatchRoot.swipeup
-swipedown = WatchRoot.swipedown
-swipeleft = WatchRoot.swipeleft
-swiperight = WatchRoot.swiperight
-# print(f"swipeup={swipeup}, swipedown={swipedown}")
+    swipeup = WatchRoot.swipeup
+    swipedown = WatchRoot.swipedown
+    swipeleft = WatchRoot.swipeleft
+    swiperight = WatchRoot.swiperight
+    # print(f"swipeup={swipeup}, swipedown={swipedown}")
 
-swipeup._start_coord_ = lambda coord: None  # print('swipeup._start_coord_', coord)
-swipeup._update_coord_ = lambda _: None
-swipeup._last_coord_ = lambda coord: (
-    WatchRoot.system_view.swipe_up() if coord[1] <= 0 else None
-)
+    swipeup._start_coord_ = lambda coord: None  # print('swipeup._start_coord_', coord)
+    swipeup._update_coord_ = lambda _: None
+    swipeup._last_coord_ = lambda coord: (
+        WatchRoot.system_view.swipe_up() if coord[1] <= 0 else None
+    )
 
-swipedown._start_coord_ = lambda _: None
-swipedown._update_coord_ = lambda _: None
-swipedown._last_coord_ = lambda coord: (
-    WatchRoot.system_view.swipe_down() if coord[1] >= SWIPE_HEIGHT else None
-)
-print(gc.mem_free())
+    swipedown._start_coord_ = lambda _: None
+    swipedown._update_coord_ = lambda _: None
+    swipedown._last_coord_ = lambda coord: (
+        WatchRoot.system_view.swipe_down() if coord[1] >= SWIPE_HEIGHT else None
+    )
+    print(gc.mem_free())
 
 gc.collect()
 print(WatchRoot)

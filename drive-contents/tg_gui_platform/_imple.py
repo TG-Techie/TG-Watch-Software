@@ -43,7 +43,7 @@ from adafruit_display_shapes.roundrect import RoundRect
 
 from adafruit_progressbar import ProgressBar
 
-_DEBUG_FILE = True
+_DEBUG_FILE = False
 
 if not _DEBUG_FILE:
     Group = displayio.Group

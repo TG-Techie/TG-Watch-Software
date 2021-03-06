@@ -552,7 +552,7 @@ class Container(Widget):
             if widget.isshowing():
                 widget._hide_()
         super()._hide_()
-        self._screen_.on_container_hide()
+        self._screen_.on_container_hide(self)
 
     def __del__(self):
         nested = self._nested_

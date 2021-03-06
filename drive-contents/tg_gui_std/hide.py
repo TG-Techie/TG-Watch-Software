@@ -54,9 +54,13 @@ class Hide(Container):
 
         self._when._register_handler_(self, self._update_visbility)
 
+    def _demolish_(self):
+        self._when._deregister_handler_(self)
+        super()._demolish_()
+
     def _show_(self):
         super(Container, self)._show_()
-        self._update_visbility(self._when.value())
+        self._update_visbility(self._when.value(self))
         self._screen_.on_container_show(self)
 
     def _update_visbility(self, hide_it):

@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 """
-This file is under active development.
+This file is under active development. (it also requires some docs and commentsm, blame TG-Techie)
 """
 
 from .constant_groups import ConstantGroup
@@ -143,7 +143,6 @@ class ratio(DimensionSpecifier):
         self._base_expr = expr
 
     def _calc_dim_(self, inst):
-        print(self, "_calc_dim_", inst)
         return self._base_expr._calc_dim(inst.dims)
 
 

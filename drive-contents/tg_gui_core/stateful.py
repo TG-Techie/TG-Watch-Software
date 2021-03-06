@@ -38,12 +38,13 @@ class State:
 
         self._repr = repr
 
-    def update(self, value):
+    def update(self, updater, value):
+        # print(f"{self}.update({updater}, {value})")
         if value != self._value:
             self._value = value
-            self._alert_registered()
+            self._alert_registered(updater)
 
-    def value(self):
+    def value(self, reader):
         return self._value
 
     def __repr__(self):
@@ -59,15 +60,17 @@ class State:
         """
         For using states as values in functions, great for button actions.
         """
-        self.update(value)
+        self.update(owner, value)
 
     def _register_handler_(self, key, handler):
         if key is None:
             self._single_upate_handlers.append(handler)
         elif key not in self._registered:
             if hasattr(key, "_id_"):
+                # print(self, "key_src = ", key)
                 key = key._id_
             self._registered[key] = handler
+
         else:
             raise ValueError(f"{self} already has a handler registered for  {key}")
 
@@ -78,12 +81,16 @@ class State:
         if key in registered:
             registered.pop(key)
 
-    def _alert_registered(self):
+    def _alert_registered(self, excluded):
+        excluded_key = getattr(excluded, "_id_", excluded)
+
         value = self._value
         for handler in self._single_upate_handlers:
             handler(value)
-        for handler in self._registered.values():
-            handler(value)
+        for key, handler in self._registered.items():
+            # print(self, subscriber_id, handler, value)
+            if key is not excluded_key:
+                handler(value)
 
     def __rshift__(self, fn):
         return DerivedState(self, fn)
@@ -123,10 +130,10 @@ class DerivedState(State):
 
     def _update_from_sources(self, _):
         value = self._derive_new_state()
-        super().update(value)
+        super().update(self, value)
 
     def _derive_new_state(self):
-        substates = [state.value() for state in self._states]
+        substates = [state.value(self) for state in self._states]
         return self._fn(*substates)
 
     def _register_with_sources(self):

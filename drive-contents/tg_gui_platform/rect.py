@@ -51,7 +51,7 @@ class Rect(Widget):
         fill_state = self._fill_state
         if isinstance(fill_state, State):
             fill_state._register_handler_(self, self._update_color)
-            self._update_color(fill_state.value())
+            self._update_color(fill_state.value(self))
         else:
             self._update_color(fill_state)
 

@@ -70,7 +70,7 @@ class ProgressBar(Widget):
         progress_state = self._progress_state
         # if isinstance(progress_state, State):
         progress_state._register_handler_(self, self._update_progress)
-        self._update_progress(progress_state.value())
+        self._update_progress(progress_state.value(self))
         # else:
         #     self._update_progress(self._progress_state)
         super()._build_()

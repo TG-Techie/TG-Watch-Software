@@ -74,7 +74,7 @@ class Label(Widget):
         text_state = self._text_state
         if isinstance(text_state, State):
             text_state._register_handler_(self, self._update_text)
-            self._update_text(text_state.value())
+            self._update_text(text_state.value(self))
         else:
             self._update_text(text_state)
 

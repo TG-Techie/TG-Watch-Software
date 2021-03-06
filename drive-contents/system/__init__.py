@@ -1,4 +1,4 @@
-from tg_gui_core.stateful import State, DerivedState
+from tg_gui_core.stateful import State, DerivedState, uid
 import hardware
 from hardware import drivers
 from . import applocals
@@ -31,6 +31,8 @@ _to_weekday = (
 
 # using classes as modules, technically reduces ram size
 class clock:
+    _id_ = uid()
+
     year = State(0000)
     month = State(00)
     weekday = State(0)
@@ -58,9 +60,9 @@ class clock:
         hours, mins, secs = clock._time
 
         # if is 24 hour time:
-        hours.update(now.tm_hour)
-        mins.update(now.tm_min)
-        secs.update(now.tm_sec)
+        hours.update(clock, now.tm_hour)
+        mins.update(clock, now.tm_min)
+        secs.update(clock, now.tm_sec)
 
         if clock._prev_refresh.tm_hour > now.tm_hour:
             clock._refresh_date()
@@ -72,11 +74,11 @@ class clock:
         now = drivers.rtc.datetime
         year, month, weekday, monthday, yearday = clock._date
 
-        year.update(now.tm_year)
-        month.update(now.tm_mon)
-        monthday.update(now.tm_mday)
-        weekday.update(now.tm_wday)
-        yearday.update(now.tm_yday)
+        year.update(clock, now.tm_year)
+        month.update(clock, now.tm_mon)
+        monthday.update(clock, now.tm_mday)
+        weekday.update(clock, now.tm_wday)
+        yearday.update(clock, now.tm_yday)
 
 
 class display:
@@ -120,11 +122,11 @@ class power:
             try:
                 raw = drivers.bat_sensor.cell_percent
                 display._physical_scale = (0.3, 0.8) if raw <= 20 else (0.2, 1.0)
-                display.brightness.update(display.brightness._value)
+                display.brightness.update(power, display.brightness._value)
                 scaled = 100.0 * min(
                     max(0, raw - power._min_percent) / power._percent_range, 1.0
                 )
-                power.bat_percent.update(scaled)
+                power.bat_percent.update(power, scaled)
                 power._last = now
             except RuntimeError as err:
                 print(f"{time.monotonic()}: battery read failed: `{err}`")

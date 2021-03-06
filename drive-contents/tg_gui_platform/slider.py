@@ -98,7 +98,7 @@ class Slider(Widget):
 
         self._knob_dim = knob_dim
         self._span = value_range = rw - knob_dim
-        self._position = pos = int(value_range * self._state.value())
+        self._position = pos = int(value_range * self._state.value(self))
         self._y_limits = (sh // 2 - knob_dim // 2, sh // 2 + knob_dim // 2)
         self._value = pos / value_range
         self._pos_on_prev_update = -10000
@@ -149,7 +149,7 @@ class Slider(Widget):
             # knob = self._knob
             # bar = self._bar
 
-            self._state.update(value)
+            self._state.update(self, value)
             self._value = value
 
             self._knob_outline.x = new_pos

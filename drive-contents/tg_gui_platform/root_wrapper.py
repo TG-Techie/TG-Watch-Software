@@ -84,6 +84,7 @@ class DisplayioScreen(Screen):
         print(f"on_widget_show(_, {widget})")
         # show the widget on the screen by adding it to the element tree
         if widget._group is not None:
+            print(widget, widget._superior_, widget._superior_._group)
             widget._superior_._group.append(widget._group)
 
     def on_widget_hide(_, widget: Widget):
@@ -92,7 +93,7 @@ class DisplayioScreen(Screen):
         if widget._group in widget._superior_._group:
             widget._superior_._group.remove(widget._group)
 
-    # contianer tie-ins
+    # container tie-ins
     def on_container_build(_, widget: Widget):
         if hasattr(widget, "_nest_count_override"):
             group_size = widget._nest_count_override
@@ -113,11 +114,19 @@ class DisplayioScreen(Screen):
         widget._group = None
 
     def on_container_show(_, widget: Widget, _full_refresh=False):
+        print(
+            widget,
+            widget._full_refresh_
+            if hasattr(widget, "_full_refresh_")
+            else "does not have",
+        )
         if hasattr(widget, "_full_refresh_") and widget._full_refresh_ is True:
             widget._screen_._root_.refresh_whole()
 
     def on_container_hide(_, widget: Widget):
         pass
+        # if hasattr(widget, "_full_refresh_") and widget._full_refresh_ is True:
+        #     widget._screen_._root_.refresh_whole()
 
     def widget_is_built(_, widget: Widget):
         # print(f"widget_is_built(_, {widget}) -> widget._group={widget._group}")
@@ -146,9 +155,10 @@ class DisplayioRootWrapper(Root):
         self.refresh_whole = self._refresh_whole
 
     def _refresh_whole(self):
+        print(f"!!refreshsing whole: {self}")
+        # make the retire tree for re-rendering
         self._display.show(None)
         self._display.show(self._group)
-        self._display.refresh()
 
     def _show_(self):
         super()._show_()

@@ -67,24 +67,31 @@ class AttributeSpecifier:
         else:
             return f"{self._previous_spec._attr_name_chain()}.{self._attr_name}"
 
-    def _get_attribute_(self, widget):
+    def _get_attribute_(self, src_thing):
         global AttributeSpecifier
-        # find the nearest superior that is declarable
 
-        if self._previous_spec is None:
-            assert isinstance(widget, Widget), f"found {widget}, expecting a Widget"
-            fromwidget = widget._superior_
-            while fromwidget._decalrable_ is False:
-                fromwidget = fromwidget._superior_
-                if fromwidget is None:
+        is_first = self._previous_spec is None
+
+        if is_first and isinstance(src_thing, Widget):
+            fromthis = src_thing
+            # account for non containers
+            if not hasattr(fromthis, "_decalrable_"):
+                fromthis = src_thing._superior_
+            # find the nearest superior that is declarable
+            while fromthis._decalrable_ is False:
+                fromthis = fromthis._superior_
+                if fromthis is None:
                     raise TypeError(f"{self} not used in a declaration")
-        else:
+        elif is_first:
+            # get it directly from here
+            fromthis = src_thing
+        else:  # get it from up the attrspec tree
             assert isinstance(
                 self._previous_spec, AttributeSpecifier
-            ), f"found {fromwidget}"
-            fromwidget = self._previous_spec._get_attribute_(widget)
+            ), f"found {src_thing}"
+            fromthis = self._previous_spec._get_attribute_(widget)
         # do not store the attr in self b/c widget it could change on a re-place
-        return getattr(fromwidget, self._attr_name)
+        return getattr(fromthis, self._attr_name)
 
     def __getattr__(self, attr_name):
         # chain constructor
