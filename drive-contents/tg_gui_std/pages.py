@@ -23,7 +23,7 @@
 import gc
 
 from tg_gui_core.stateful import State
-from tg_gui_core.base import Container, Widget
+from tg_gui_core.base import Container, Widget, declarable
 from tg_gui_core.attribute_specifier import AttributeSpecifier
 from tg_gui_core.constant_groups import ConstantGroup
 
@@ -39,6 +39,7 @@ class PageState(State):
     pass
 
 
+@declarable
 class Pages(Container):
     """
     Pages has two modes of initing

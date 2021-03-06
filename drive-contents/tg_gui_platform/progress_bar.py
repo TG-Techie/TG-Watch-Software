@@ -36,46 +36,50 @@ class ProgressBar(Widget):
         if self._palette is None:
             self._palette = self._screen_.palettes.primary
 
-    def _place_(self, coord, dims):
-        super()._place_(coord, dims)
+    def _build_(self):
+        super()._build_()
 
         self._group = imple.Group(max_size=2)
 
-        radius = self._phys_height_ // 2
+        rx, ry = self._rel_coord_
+        pw, ph = self._phys_size_
+
+        radius = ph // 2
 
         if self._fill_space:
             self._group = group = imple.ProgressBar(
-                *self._rel_placement_,
+                rx,
+                ry,
+                pw,
+                ph,
                 progress=0.0,
                 stroke=1,
                 bar_color=self._palette.fill_color,
             )
         else:
             self._group = group = imple.ProgressBar(
-                x=self._rel_x_ + radius,
-                y=self._rel_y_ + self._phys_height_ // 2 - 6,
-                width=self._phys_width_ - 2 * radius,
+                x=rx + radius,
+                y=ry + ph // 2 - 6,
+                width=pw - 2 * radius,
                 height=12,
                 progress=0.0,
                 stroke=1,
                 bar_color=self._palette.fill_color,
             )
 
-    def _render_(self):
-        # self._update_color()
         progress_state = self._progress_state
-        if isinstance(progress_state, State):
-            progress_state._register_handler_(self, self._update_progress)
-            self._update_progress(progress_state.value())
-        else:
-            self._update_color(self._progress_state)
-        super()._render_()
+        # if isinstance(progress_state, State):
+        progress_state._register_handler_(self, self._update_progress)
+        self._update_progress(progress_state.value())
+        # else:
+        #     self._update_progress(self._progress_state)
+        super()._build_()
 
-    def _derender_(self):
+    def _demolish_(self):
         if isinstance(self._progress_state, State):
             self._progress_state._deregister_handler_(self)
-        super()._derender_()
+        super()._demolish_()
 
     def _update_progress(self, value):
-        if self.isplaced():
+        if self.isbuilt():
             self._group.progress = clip(0.0, value, 1.0)

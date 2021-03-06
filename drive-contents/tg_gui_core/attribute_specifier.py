@@ -67,18 +67,24 @@ class AttributeSpecifier:
         else:
             return f"{self._previous_spec._attr_name_chain()}.{self._attr_name}"
 
-    def _get_attribute_(self, fromobj):
+    def _get_attribute_(self, widget):
         global AttributeSpecifier
+        # find the nearest superior that is declarable
+
         if self._previous_spec is None:
-            assert isinstance(fromobj, Widget), f"found {fromobj}"
-            fromobj = fromobj._superior_
+            assert isinstance(widget, Widget), f"found {fromobj}, expecting a Widget"
+            fromwidget = widget._superior_
+            while fromwidget._decalrable_ is False:
+                fromwidget = fromwidget._superior_
+                if fromwidget is None:
+                    raise TypeError(f"{self} not used in a declaration")
         else:
             assert isinstance(
                 self._previous_spec, AttributeSpecifier
-            ), f"found {fromobj}"
-            fromobj = self._previous_spec._get_attribute_(fromobj)
+            ), f"found {fromwidget}"
+            fromwidget = self._previous_spec._get_attribute_(fromobj)
         # do not store the attr in self b/c fromobj it could change on a re-place
-        return getattr(fromobj, self._attr_name)
+        return getattr(fromwidget, self._attr_name)
 
     def __getattr__(self, attr_name):
         # chain constructor

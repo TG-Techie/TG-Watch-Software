@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from .base import Container, Widget, layout_class
+from .base import Container, Widget, layout_class, declarable
 
 _layout_class_to_method_name = {
     layout_class.wearable: "_wearable_",
@@ -31,6 +31,7 @@ _layout_class_to_method_name = {
 }
 
 
+@declarable
 class Layout(Container):
     def _format_(self, pos_spec, dim_spec):
         global _layout_class_to_method_name

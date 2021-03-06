@@ -31,8 +31,8 @@ class Rect(Widget):
         self._fill_state = fill
         self._radius_src = radius
 
-    def _place_(self, coord, dims):
-        super()._place_(coord, dims)
+    def _build_(self):
+        super()._build_()
 
         radius = self._radius_src
         if radius is None:
@@ -43,14 +43,10 @@ class Rect(Widget):
         self._radius = min(radius, self.width // 2, self.height // 2)
 
         self._group = imple.SimpleRoundRect(
-            *self._rel_placement_,
+            *(self._rel_coord_ + self._phys_size_),
             radius=self._radius,
         )
 
-    def _pickup_(self):
-        super()._pickup_()
-
-    def _render_(self):
         # self._update_color()
         fill_state = self._fill_state
         if isinstance(fill_state, State):
@@ -58,9 +54,8 @@ class Rect(Widget):
             self._update_color(fill_state.value())
         else:
             self._update_color(fill_state)
-        super()._render_()
 
-    def _derender_(self):
+    def _demolish_(self):
         if isinstance(self._fill_state, State):
             self._fill_state._deregister_handler_(self)
         super()._derender_()

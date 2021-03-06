@@ -81,13 +81,13 @@ class DisplayioScreen(Screen):
                 raise RuntimeError(f"double _updateables_ error {widget}")
 
     def on_widget_show(_, widget: Widget):
-        print(f"on_widget_show(_, {widget})")
+        # print(f"on_widget_show(_, {widget})")
         # show the widget on the screen by adding it to the element tree
         if widget._group is not None:
             widget._superior_._group.append(widget._group)
 
     def on_widget_hide(_, widget: Widget):
-        print(f"on_widget_hide(_, {widget})")
+        # print(f"on_widget_hide(_, {widget})")
         # if it is on the screen, remove it
         if widget._group in widget._superior_._group:
             widget._superior_._group.remove(widget._group)
@@ -119,7 +119,8 @@ class DisplayioScreen(Screen):
     def on_container_hide(_, widget: Widget):
         pass
 
-    def widget_is_rendered(_, widget: Widget):
+    def widget_is_built(_, widget: Widget):
+        # print(f"widget_is_built(_, {widget}) -> widget._group={widget._group}")
         return widget._group is not None
 
 

@@ -102,7 +102,7 @@ class Button(Widget):
         self._group = group = imple.Group(max_size=2)
 
         self._rect = rect = imple.SimpleRoundRect(
-            *(self._phys_coord_ + self._phys_size_),
+            *(self._rel_coord_ + self._phys_size_),
             radius=radius,
         )
 

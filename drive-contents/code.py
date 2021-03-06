@@ -32,6 +32,7 @@ from setup.watchsetup import (
 )
 
 from tg_gui_std.all import Pages, PageState
+from tg_gui_std.all import *
 
 print(gc.mem_free())
 
@@ -43,53 +44,68 @@ print(gc.mem_free())
 SWIPE_HEIGHT = const(15)
 SWIPE_WIDTH = const(20)
 
-
-@DisplayioRootWrapper(screen=screen, display=display, size=(240, 240))
-class WatchRoot(Layout):
-    btn = Button(text="foo", press=lambda: print("Hello!"))
-    lbl = Label(text="Hi!")
-
-    def _any_(self):
-        self.lbl(top, (self.width, self.height // 4))
-        self.btn(center, (self.width // 2, self.height // 4))
-
-
 #
 # @DisplayioRootWrapper(screen=screen, display=display, size=(240, 240))
 # class WatchRoot(Layout):
+#     value = State(0.5)
+#     indicator = State(False)
 #
-#     swipeup = Widget(margin=0)
-#     swipedown = Widget(margin=0)
-#     swipeleft = Widget(margin=0)
-#     swiperight = Widget(margin=0)
-#     system_view = SystemView()
+#     split = VSplit(
+#         HSplit(
+#             Label(text=value >> (lambda s: f"{round(s, 3)}")),
+#             ProgressBar(progress=value),
+#         ),
+#         Slider(value=value),
+#         HSplit(
+#             Rect(fill=indicator >> (lambda i: color.green if i else color.red)),
+#             Hide(Rect(), when=~indicator),
+#         ),
+#         Button(text="foo", press=self.toggle_color),
+#     )
 #
-#     def _wearable_(self):
-#         view = self.system_view((left, top), self.dims)
-#         self.swipeup((0, 240), (self.width, SWIPE_HEIGHT))
-#         self.swipedown((0, 0), (self.width, SWIPE_HEIGHT))
-#         self.swipeleft((240, 0), (SWIPE_WIDTH, self.height))
-#         self.swiperight((0, 0), (SWIPE_WIDTH, self.height))
+#     def _any_(self):
+#         split = self.split(center, (self.width, self.height))
 #
+#     def toggle_color(self):
+#         self.indicator = not self.indicator
 #
-# swipeup = WatchRoot.swipeup
-# swipedown = WatchRoot.swipedown
-# swipeleft = WatchRoot.swipeleft
-# swiperight = WatchRoot.swiperight
-# # print(f"swipeup={swipeup}, swipedown={swipedown}")
-#
-# swipeup._start_coord_ = lambda coord: None  # print('swipeup._start_coord_', coord)
-# swipeup._update_coord_ = lambda _: None
-# swipeup._last_coord_ = lambda coord: (
-#     WatchRoot.system_view.swipe_up() if coord[1] <= 0 else None
-# )
-#
-# swipedown._start_coord_ = lambda _: None
-# swipedown._update_coord_ = lambda _: None
-# swipedown._last_coord_ = lambda coord: (
-#     WatchRoot.system_view.swipe_down() if coord[1] >= SWIPE_HEIGHT else None
-# )
-# print(gc.mem_free())
+
+
+@DisplayioRootWrapper(screen=screen, display=display, size=(240, 240))
+class WatchRoot(Layout):
+
+    swipeup = Widget(margin=0)
+    swipedown = Widget(margin=0)
+    swipeleft = Widget(margin=0)
+    swiperight = Widget(margin=0)
+    system_view = SystemView()
+
+    def _wearable_(self):
+        view = self.system_view((left, top), self.dims)
+        self.swipeup((0, 240), (self.width, SWIPE_HEIGHT))
+        self.swipedown((0, 0), (self.width, SWIPE_HEIGHT))
+        self.swipeleft((240, 0), (SWIPE_WIDTH, self.height))
+        self.swiperight((0, 0), (SWIPE_WIDTH, self.height))
+
+
+swipeup = WatchRoot.swipeup
+swipedown = WatchRoot.swipedown
+swipeleft = WatchRoot.swipeleft
+swiperight = WatchRoot.swiperight
+# print(f"swipeup={swipeup}, swipedown={swipedown}")
+
+swipeup._start_coord_ = lambda coord: None  # print('swipeup._start_coord_', coord)
+swipeup._update_coord_ = lambda _: None
+swipeup._last_coord_ = lambda coord: (
+    WatchRoot.system_view.swipe_up() if coord[1] <= 0 else None
+)
+
+swipedown._start_coord_ = lambda _: None
+swipedown._update_coord_ = lambda _: None
+swipedown._last_coord_ = lambda coord: (
+    WatchRoot.system_view.swipe_down() if coord[1] >= SWIPE_HEIGHT else None
+)
+print(gc.mem_free())
 
 gc.collect()
 print(WatchRoot)

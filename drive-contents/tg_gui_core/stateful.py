@@ -24,6 +24,10 @@ from .base import *
 from .attribute_specifier import AttributeSpecifier
 
 
+def _not(obj):
+    return not obj
+
+
 class State:
     def __init__(self, value, repr=repr):
         self._id_ = uid()
@@ -80,6 +84,16 @@ class State:
             handler(value)
         for handler in self._registered.values():
             handler(value)
+
+    def __rshift__(self, fn):
+        return DerivedState(self, fn)
+
+    @classmethod
+    def __bool__(cls):
+        raise TypeError(f"'{cls.__name__}' objects cannot be cast to bools")
+
+    def __invert__(self):
+        return DerivedState(self, _not)
 
 
 class DerivedState(State):

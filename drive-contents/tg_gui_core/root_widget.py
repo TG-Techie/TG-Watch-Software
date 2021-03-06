@@ -30,7 +30,7 @@ class Root(Container):
 
         self._id_ = uid()
 
-        self._superior_ = None
+        # self._superior_ = None
         self._screen_ = screen
 
         self._size_ = size
@@ -56,6 +56,10 @@ class Root(Container):
     _coord_ = property(lambda self: (0, 0))
     _rel_coord_ = property(lambda self: (0, 0))
     _phys_coord_ = property(lambda self: (0, 0))
+
+    @property
+    def _superior_(self):
+        return None
 
     @property
     def wrapped(self):

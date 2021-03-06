@@ -208,7 +208,7 @@ class Screen:
     def on_container_hide(_, widget: "Widget"):
         raise NotImplementedError
 
-    def widget_is_rendered(_, widget: "Widget"):
+    def widget_is_built(_, widget: "Widget"):
         raise NotImplementedError
 
 
@@ -259,13 +259,8 @@ class Widget:
 
     isformated = isplaced
 
-    def isrendered(self):
-        return self.isnested() and self._screen_.widget_is_rendered(self)
-
-    def islinked(self):
-        return self._is_linked is True
-
-    isbuilt = islinked
+    def isbuilt(self):
+        return self.isformated() and self._screen_.widget_is_built(self)
 
     def isshowing(self):
         return self._is_shown
@@ -283,18 +278,16 @@ class Widget:
 
     # placement sugar, still in flux (keep near _format_)
     def __call__(self, pos_spec, dim_spec):
-        print(f"{repr(self)}.__call__({repr(pos_spec)}, {repr(dim_spec)})")
-        self._form(dim_spec)
-        self._place(pos_spec)
+        self._format_(pos_spec, dim_spec)
         return self
 
     def _format_(self, pos_spec, dim_spec):
-        self._form(dim_spec)
-        self._place(pos_spec)
+        self._form_(dim_spec)
+        self._place_(pos_spec)
 
     def _deformat_(self):
-        self._pickup()
-        self._deform()
+        self._pickup_()
+        self._deform_()
 
     def _build_(self):
         assert self.isplaced()
@@ -348,7 +341,7 @@ class Widget:
                 f"cannot unnest {self} from {superior}, it is nested in {self._superior_}"
             )
 
-    def _form(self, dim_spec):
+    def _form_(self, dim_spec):
         assert self.isnested(), f"{self} must be nested to size it, it's not"
         assert not self.isformed(), f"{self} is already formed"
 
@@ -372,13 +365,13 @@ class Widget:
         self._size_ = (width, height)
         self._phys_size_ = (width - margin * 2, height - margin * 2)
 
-    def _deform(self):
+    def _deform_(self):
         assert self.isformed()
         self._margin_ = None
         self._size_ = None
         self._phys_size_ = None
 
-    def _place(self, pos_spec):
+    def _place_(self, pos_spec):
         assert self.isformed(), f"{self} must be sized to place it, it's not"
         assert not self.isplaced()
 
@@ -411,7 +404,7 @@ class Widget:
         pw, ph = self._phys_size_
         self._phys_end_coord_ = (px + pw, py + ph)
 
-    def _pickup(self):
+    def _pickup_(self):
         assert not self.isrendered()
         assert self.isplaced()
         # only containers need to worry about when to cover vs replace
@@ -457,9 +450,9 @@ class Widget:
         if self.isrendered():
             self._derender_()
         if self.isplaced():
-            self._pickup()
+            self._pickup_()
         if self.isformed():
-            self._deform()
+            self._deform_()
         if self.isnested():
             self._superior_._unnest_(self)
         # remove double links
@@ -473,7 +466,22 @@ class Widget:
         self._phys_coord_ = None
 
 
+def declarable(cls):
+    """
+    dcecorator to mark that a contianer is declarable (like layout or Pages).
+    this is used for attr_specs to finf the referenced self in `self.blah`
+    """
+    assert isinstance(cls, type), f"can only decorate classes"
+    assert issubclass(
+        cls, Container
+    ), f"{cls} does not subclass Container, it must to be @declarable"
+    cls._decalrable_ = True
+    return cls
+
+
 class Container(Widget):
+    _decalrable_ = False
+
     def __init__(self):
         global Widget
 
@@ -498,7 +506,8 @@ class Container(Widget):
 
     def _format_(self, pos_spec, dim_spec):
         raise NotImplementedError(
-            f"{type(self).__name__}._format_(...) not implemented"
+            f"{type(self).__name__}._format_(...) not implemented,"
+            + " see tg_gui_core/base.py for the template"
         )
         # Template:
         super()._format_(pos_spec, dim_spec)
@@ -512,7 +521,10 @@ class Container(Widget):
         self._screen_.on_container_deformat(self)
 
     def _build_(self):
-        raise NotImplementedError(f"{type(self).__name__}._build_() not implemented")
+        raise NotImplementedError(
+            f"{type(self).__name__}._build_() not implemented,"
+            + " see tg_gui_core/base.py for the template"
+        )
         # Template:
         super()._build_()
         # container subcless specific build code here
@@ -526,8 +538,13 @@ class Container(Widget):
         self._screen_.on_container_demolish()
 
     def _show_(self):
+        raise NotImplementedError(
+            f"{type(self).__name__}._show_() not implemented,"
+            + " see tg_gui_core/base.py for the template"
+        )
+        # Tempalte:
         super()._show_()
-        raise NotImplementedError(f"{type(self).__name__}._show_() not implemented")
+        # container subcless specific show code here
         self._screen_.on_container_show()
 
     def _hide_(self):
@@ -538,7 +555,7 @@ class Container(Widget):
         self._screen_.on_container_hide()
 
     def __del__(self):
-        super().__del__()
         nested = self._nested_
         while len(nested):
             del nested[0]
+        super().__del__()

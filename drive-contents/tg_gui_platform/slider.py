@@ -46,23 +46,29 @@ class Slider(Widget):
         if self._palette is None:
             self._palette = self._screen_.palettes.primary
 
-    def _place_(self, coord, dims, knob_dim=None):
-        super()._place_(coord, dims)
+    def _build_(self):
+        super()._build_()
 
         screen = self._screen_
         palette = self._palette
         debug = self._debug
 
-        sx, sy, sw, sh = self._placement_
-        rx, ry, rw, rh = self._rel_placement_
+        sx, sy = self._coord_
+        sw, sh = self._size_
+        rx, ry = self._rel_coord_
+        rw, rh = self._phys_size_
 
-        if knob_dim is None:
-            knob_dim = screen.min_size
+        knob_dim = min(rh, screen.min_size)
 
         self._group = group = imple.Group(x=rx, y=ry, max_size=(4 if debug else 3))
 
         self._bar = bar = imple.ProgressBar(
-            0, rh // 2 - 6, rw, 12, stroke=0, bar_color=self._palette.fill_color
+            0,  # knob_dim // 2,  # 0,
+            rh // 2 - 6,
+            rw - knob_dim,
+            12,
+            stroke=0,
+            bar_color=self._palette.fill_color,
         )
 
         self._knob_outline = knob_outline = imple.SimpleRoundRect(
