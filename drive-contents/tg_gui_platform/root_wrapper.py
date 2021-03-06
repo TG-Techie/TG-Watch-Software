@@ -81,7 +81,7 @@ class DisplayioScreen(Screen):
                 raise RuntimeError(f"double _updateables_ error {widget}")
 
     def on_widget_show(_, widget: Widget):
-        # print(f"on_widget_show(_, {widget})")
+        print(f"on_widget_show(_, {widget})")
         # show the widget on the screen by adding it to the element tree
         if widget._group is not None:
             widget._superior_._group.append(widget._group)

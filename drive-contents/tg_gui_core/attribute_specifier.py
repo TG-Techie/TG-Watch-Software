@@ -72,7 +72,7 @@ class AttributeSpecifier:
         # find the nearest superior that is declarable
 
         if self._previous_spec is None:
-            assert isinstance(widget, Widget), f"found {fromobj}, expecting a Widget"
+            assert isinstance(widget, Widget), f"found {widget}, expecting a Widget"
             fromwidget = widget._superior_
             while fromwidget._decalrable_ is False:
                 fromwidget = fromwidget._superior_
@@ -82,8 +82,8 @@ class AttributeSpecifier:
             assert isinstance(
                 self._previous_spec, AttributeSpecifier
             ), f"found {fromwidget}"
-            fromwidget = self._previous_spec._get_attribute_(fromobj)
-        # do not store the attr in self b/c fromobj it could change on a re-place
+            fromwidget = self._previous_spec._get_attribute_(widget)
+        # do not store the attr in self b/c widget it could change on a re-place
         return getattr(fromwidget, self._attr_name)
 
     def __getattr__(self, attr_name):

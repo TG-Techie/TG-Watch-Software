@@ -84,6 +84,7 @@ class DimensionExpression:
 
     def _calc_dim(self, dims):
         ops = _operations
+        print(self)
         running_value = dims[0] if self._is_horizontal else dims[1]
         for op, value in self._operation_sequence:
             # if it is also a DimExpr, simplify it
@@ -142,6 +143,7 @@ class ratio(DimensionSpecifier):
         self._base_expr = expr
 
     def _calc_dim_(self, inst):
+        print(self, "_calc_dim_", inst)
         return self._base_expr._calc_dim(inst.dims)
 
 

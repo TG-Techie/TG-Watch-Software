@@ -29,6 +29,9 @@ class Button(Widget):
     def _selected_(self):
         self._update_colors()
 
+    def __repr__(self):
+        return super().__repr__() + f"({self._text_state})"
+
     def __init__(
         self,
         *,
@@ -78,12 +81,6 @@ class Button(Widget):
             font_size = self._screen_.default.font_size
         self._font_size = font_size
 
-        radius = self._radius_src
-        if radius is None:
-            self._radius = self._screen_.default.radius
-        if isinstance(radius, DimensionSpecifier):
-            self._radius = radius._calc_dim_(self)
-
         press_spec = self._press_spec
         if isinstance(press_spec, AttributeSpecifier):
             self._press_ = press_spec._get_attribute_(self)
@@ -97,7 +94,14 @@ class Button(Widget):
         super()._build_()
 
         font_size = self._font_size
-        radius = min(self._radius, self.width // 2, self.height // 2)
+
+        self._radius = radius = self._radius_src
+        if radius is None:
+            self._radius = radius = self._screen_.default.radius
+        if isinstance(radius, DimensionSpecifier):
+            self._radius = radius = radius._calc_dim_(self)
+
+        radius = min(radius, self.width // 2, self.height // 2)
 
         self._group = group = imple.Group(max_size=2)
 
