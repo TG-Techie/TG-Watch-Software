@@ -26,6 +26,7 @@ from setup.watchsetup import (
     event_loop,
     Layout,
     Button,
+    Label,
     Rect,
     singleinstance,
 )
@@ -45,42 +46,57 @@ SWIPE_WIDTH = const(20)
 
 @DisplayioRootWrapper(screen=screen, display=display, size=(240, 240))
 class WatchRoot(Layout):
+    btn = Button(text="foo", press=lambda: print("Hello!"))
+    lbl = Label(text="Hi!")
 
-    swipeup = Widget(margin=0)
-    swipedown = Widget(margin=0)
-    swipeleft = Widget(margin=0)
-    swiperight = Widget(margin=0)
-    system_view = SystemView()
-
-    def _wearable_(self):
-        view = self.system_view((left, top), self.dims)
-        self.swipeup((0, 240), (self.width, SWIPE_HEIGHT))
-        self.swipedown((0, 0), (self.width, SWIPE_HEIGHT))
-        self.swipeleft((240, 0), (SWIPE_WIDTH, self.height))
-        self.swiperight((0, 0), (SWIPE_WIDTH, self.height))
+    def _any_(self):
+        self.lbl(top, (self.width, self.height // 4))
+        self.btn(center, (self.width // 2, self.height // 4))
 
 
-swipeup = WatchRoot.swipeup
-swipedown = WatchRoot.swipedown
-swipeleft = WatchRoot.swipeleft
-swiperight = WatchRoot.swiperight
-# print(f"swipeup={swipeup}, swipedown={swipedown}")
+#
+# @DisplayioRootWrapper(screen=screen, display=display, size=(240, 240))
+# class WatchRoot(Layout):
+#
+#     swipeup = Widget(margin=0)
+#     swipedown = Widget(margin=0)
+#     swipeleft = Widget(margin=0)
+#     swiperight = Widget(margin=0)
+#     system_view = SystemView()
+#
+#     def _wearable_(self):
+#         view = self.system_view((left, top), self.dims)
+#         self.swipeup((0, 240), (self.width, SWIPE_HEIGHT))
+#         self.swipedown((0, 0), (self.width, SWIPE_HEIGHT))
+#         self.swipeleft((240, 0), (SWIPE_WIDTH, self.height))
+#         self.swiperight((0, 0), (SWIPE_WIDTH, self.height))
+#
+#
+# swipeup = WatchRoot.swipeup
+# swipedown = WatchRoot.swipedown
+# swipeleft = WatchRoot.swipeleft
+# swiperight = WatchRoot.swiperight
+# # print(f"swipeup={swipeup}, swipedown={swipedown}")
+#
+# swipeup._start_coord_ = lambda coord: None  # print('swipeup._start_coord_', coord)
+# swipeup._update_coord_ = lambda _: None
+# swipeup._last_coord_ = lambda coord: (
+#     WatchRoot.system_view.swipe_up() if coord[1] <= 0 else None
+# )
+#
+# swipedown._start_coord_ = lambda _: None
+# swipedown._update_coord_ = lambda _: None
+# swipedown._last_coord_ = lambda coord: (
+#     WatchRoot.system_view.swipe_down() if coord[1] >= SWIPE_HEIGHT else None
+# )
+# print(gc.mem_free())
 
-swipeup._start_coord_ = lambda coord: None  # print('swipeup._start_coord_', coord)
-swipeup._update_coord_ = lambda _: None
-swipeup._last_coord_ = lambda coord: (
-    WatchRoot.system_view.swipe_up() if coord[1] <= 0 else None
-)
-
-swipedown._start_coord_ = lambda _: None
-swipedown._update_coord_ = lambda _: None
-swipedown._last_coord_ = lambda coord: (
-    WatchRoot.system_view.swipe_down() if coord[1] >= SWIPE_HEIGHT else None
-)
-print(gc.mem_free())
-
-
+gc.collect()
+print(WatchRoot)
 WatchRoot._superior_._std_startup_()
+
+g = WatchRoot._superior_._group
+print(g, g[0])
 gc.collect()
 
 # a = Rect(fill=color.red)

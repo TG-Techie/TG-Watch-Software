@@ -38,7 +38,7 @@ class SystemView(Pages):
     # page = PageState(self.face)
     page = PageState(
         0,  # REQUIRES PATCH to allow for specifying by name
-        mode=PageState.mode.page_widget,
+        # mode=PageState.mode.page_widget,
     )
 
     face = default_face

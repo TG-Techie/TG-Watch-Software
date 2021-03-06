@@ -24,11 +24,8 @@
 import random as _random
 
 from .constant_groups import *
-from .layout_classes import *
 from .position_specifiers import *
 from .dimension_specifiers import *
-
-# TODO: make widgets return DimSpecs and PosSpecs when dims and coords are not set yet
 
 
 class NestingError(RuntimeError):
@@ -81,9 +78,9 @@ class color:
     black = 0x000000
 
     def fromfloats(r, g, b):
-        r = round(255 * r ** 1.2)
-        g = round(255 * g ** 1.2)
-        b = round(255 * b ** 1.2)
+        r = round(255 * r ** 1.125)
+        g = round(255 * g ** 1.125)
+        b = round(255 * b ** 1.125)
         return (r << 16) | (g << 8) | (b << 0)
 
 
@@ -143,7 +140,7 @@ layout_class = ConstantGroup(
     ),
 )
 
-
+# clean up later
 class Screen:
     def __init__(
         self,
@@ -180,43 +177,43 @@ class Screen:
     # platform tie-in functions
 
     def on_widget_nest_in(_, wid: "Widget"):
-        pass
+        raise NotImplementedError
 
     def on_widget_unnest_from(_, wid: "Widget"):
-        pass
+        raise NotImplementedError
 
-    def on_widget_render(_, wid: "Widget"):
-        pass
+    def on_widget_build(_, wid: "Widget"):
+        raise NotImplementedError
 
-    def on_widget_derender(_, wid: "Widget"):
-        pass
+    def on_widget_demolish(_, wid: "Widget"):
+        raise NotImplementedError
 
     def on_widget_show(_, wid: "Widget"):
-        pass
+        raise NotImplementedError
 
     def on_widget_hide(_, wid: "Widget"):
-        pass
+        raise NotImplementedError
 
     # container tie-ins
 
-    def on_container_place(_, wid: "Widget"):
-        pass
+    def on_container_build(_, wid: "Widget"):
+        raise NotImplementedError
 
-    def on_container_pickup(_, wid: "Widget"):
-        pass
+    def on_container_demolish(_, wid: "Widget"):
+        raise NotImplementedError
 
-    def on_container_render(_, widget: "Widget"):
-        pass
+    def on_container_show(_, widget: "Widget"):
+        raise NotImplementedError
 
-    def on_container_derender(_, widget: "Widget"):
-        pass
+    def on_container_hide(_, widget: "Widget"):
+        raise NotImplementedError
+
+    def widget_is_rendered(_, widget: "Widget"):
+        raise NotImplementedError
 
 
 class Widget:
-
-    _next_id = 0
-
-    def __init__(self, *, margin=None):  # TODO: should use nest or superior kwarg?
+    def __init__(self, *, margin=None):
         global Widget
         self._id_ = uid()
 
@@ -233,7 +230,7 @@ class Widget:
         self._is_linked = False
         self._is_shown = False
 
-        self._margin_ = margin
+        self._margin_spec = margin
 
     dims = property(lambda self: self._size_)
     width = property(lambda self: self._size_[0])
@@ -242,6 +239,36 @@ class Widget:
     coord = property(lambda self: self._coord_)
     x = property(lambda self: self._coord_[0])
     y = property(lambda self: self._coord_[1])
+
+    # internal protocols
+    # ._phys_size_
+    # ._size_
+    # ._coord_
+    # ._rel_coord_
+    # ._phys_coord_
+    # ._phys_end_coord_
+
+    def isnested(self):
+        return self._superior_ is not None
+
+    def isformed(self):
+        return self._size_ is not None
+
+    def isplaced(self):
+        return self._coord_ is not None  # and self.isnested()
+
+    isformated = isplaced
+
+    def isrendered(self):
+        return self.isnested() and self._screen_.widget_is_rendered(self)
+
+    def islinked(self):
+        return self._is_linked is True
+
+    isbuilt = islinked
+
+    def isshowing(self):
+        return self._is_shown
 
     def __repr__(self):
         return f"<{type(self).__name__} {self._id_}>"
@@ -254,35 +281,32 @@ class Widget:
             owner._nest_(self)
         return self
 
-    # placement sugar, still in flux
+    # placement sugar, still in flux (keep near _format_)
     def __call__(self, pos_spec, dim_spec):
-        self._form_(dim_spec)
-        self._place_(pos_spec)
-        self._link()
+        print(f"{repr(self)}.__call__({repr(pos_spec)}, {repr(dim_spec)})")
+        self._form(dim_spec)
+        self._place(pos_spec)
         return self
 
-    def _setup_(self, pos_spec, dim_spec):
-        self._form_(dim_spec)
-        self._place_(pos_spec)
-        self._link()
+    def _format_(self, pos_spec, dim_spec):
+        self._form(dim_spec)
+        self._place(pos_spec)
 
-    def isnested(self):
-        return bool(self._superior_ is not None)
+    def _deformat_(self):
+        self._pickup()
+        self._deform()
 
-    def isformed(self):
-        return bool(self._coord_ is not None)
+    def _build_(self):
+        assert self.isplaced()
+        self._screen_.on_widget_build(self)  # platform tie-in
+        # self._render_()
+        # self._link_()
 
-    def isplaced(self):
-        return self._placement_ is not None  # and self.isnested()
-
-    def islinked(self):
-        return self._is_linked is True
-
-    def isrendered(self):
-        return self.isnested() and self._screen_.widget_is_rendered(self)
-
-    def isshowing(self):
-        return self._is_shown
+    def _demolish_(self):
+        assert self.isrendered()
+        self._screen_.on_widget_demolish(self)  # platform tie-in
+        # self._unlink_()
+        # self._derender_()
 
     def _nest_in_(self, superior):
         """
@@ -305,7 +329,6 @@ class Widget:
                 f"{self} already nested in {current}, " + f"cannot nest in {superior}"
             )
 
-        self._on_any_nest()
         self._on_nest_()
 
     def _unnest_from_(self, superior=None):
@@ -325,9 +348,9 @@ class Widget:
                 f"cannot unnest {self} from {superior}, it is nested in {self._superior_}"
             )
 
-    def _form_(self, dim_spec):
+    def _form(self, dim_spec):
         assert self.isnested(), f"{self} must be nested to size it, it's not"
-        assert not self.isformed()
+        assert not self.isformed(), f"{self} is already formed"
 
         # format dims
         width, height = dim_spec
@@ -336,23 +359,26 @@ class Widget:
         if isinstance(height, DimensionSpecifier):
             height = height._calc_dim_(self)
 
-        margin = self._marign_
-        if margin is None:
-            margin = self._screen_.default.margin
+        margin_spec = self._margin_spec
+        if margin_spec is None:
+            margin_spec = self._screen_.default.margin
 
         if isinstance(margin_spec, DimensionSpecifier):
-            margin = margin._calc_dim_(self)
+            margin = margin_spec._calc_dim_(self)
+        else:
+            margin = margin_spec
 
-        # make sure PositionSpecifiers have access to width/height
+        self._margin_ = margin
         self._size_ = (width, height)
         self._phys_size_ = (width - margin * 2, height - margin * 2)
 
-    def _deform_(self):
+    def _deform(self):
         assert self.isformed()
+        self._margin_ = None
         self._size_ = None
         self._phys_size_ = None
 
-    def _place_(self, pos_spec):
+    def _place(self, pos_spec):
         assert self.isformed(), f"{self} must be sized to place it, it's not"
         assert not self.isplaced()
 
@@ -379,30 +405,34 @@ class Widget:
         spr_x, spr_y = self._superior_._phys_coord_
 
         self._coord_ = (x, y)
-        self._rel_coord_ = (x + margin, y + margin)
-        self._phys_coord_ = (spr_x + rx, spr_y + ry)
+        self._rel_coord_ = rx, ry = (x + margin, y + margin)
+        self._phys_coord_ = px, py = (spr_x + rx, spr_y + ry)
 
-    def _pickup_(self):
+        pw, ph = self._phys_size_
+        self._phys_end_coord_ = (px + pw, py + ph)
+
+    def _pickup(self):
         assert not self.isrendered()
         assert self.isplaced()
         # only containers need to worry about when to cover vs replace
         self._coord_ = None
         self._rel_coord_ = None
         self._phys_coord_ = None
+        self._phys_end_coord_ = None
 
-    def _link_(self):
-        self._is_linked = True
-
-    def _unlink_(self):
-        self._is_linked = False
-
-    def _render_(self):
-        assert self.isplaced()
-        self._screen_.on_widget_render(self)  # platform tie-in
-
-    def _derender_(self):
-        assert self.isrendered()
-        self._screen_.on_widget_derender(self)  # platform tie-in
+    # def _link_(self):
+    #     self._is_linked = True
+    #
+    # def _unlink_(self):
+    #     self._is_linked = False
+    #
+    # def _render_(self):
+    #     assert self.isplaced()
+    #     self._screen_.on_widget_build(self)  # platform tie-in
+    #
+    # def _derender_(self):
+    #     assert self.isrendered()
+    #     self._screen_.on_widget_demolish(self)  # platform tie-in
 
     def _show_(self):
         assert self.isnested()
@@ -421,13 +451,26 @@ class Widget:
         pass
 
     def __del__(self):
+        # deconstruct from current stage
+        if self.isshowing():
+            self._hide_()
+        if self.isrendered():
+            self._derender_()
+        if self.isplaced():
+            self._pickup()
+        if self.isformed():
+            self._deform()
+        if self.isnested():
+            self._superior_._unnest_(self)
         # remove double links
         self._superior_ = None
         self._screen_ = None
         # remove placement cache
-        self._placement_ = None
-        self._rel_placement_ = None
-        self._phys_coord = None
+        self._size_ = None
+        self._phys_size_ = None
+        self._coord_ = None
+        self._rel_coord_ = None
+        self._phys_coord_ = None
 
 
 class Container(Widget):
@@ -438,14 +481,9 @@ class Container(Widget):
 
         self._nested_ = []
 
-        self._setup_()
-
     @property
     def fill(self):
         return ((0, 0), self.dims)
-
-    def _setup_(self):
-        pass  # used for setting up of reuables contianers, "compound widgets"
 
     def _nest_(self, widget: Widget):
         if widget not in self._nested_:
@@ -458,63 +496,46 @@ class Container(Widget):
         while widget in self._nested_:
             self._nested_.remove(widget)
 
-    def _form_(self, dim_spec):
-        super()._form_(dim_spec)
-        raise NotImplementedError(f"{type(self).__name__}._form_ not implemented")
+    def _format_(self, pos_spec, dim_spec):
+        raise NotImplementedError(
+            f"{type(self).__name__}._format_(...) not implemented"
+        )
+        # Template:
+        super()._format_(pos_spec, dim_spec)
+        # container subcless specific format code here
 
-    def _deform_(self):
-        super()._deform_()
-        raise NotImplementedError(f"{type(self).__name__}._deform_ not implemented")
-
-    def _place_(self, dim_spec):
-        super()._place_(coord, dims)
-        self._place_nested_()
-
-    def _pickup_(self):
-        self._pickup_nested_()
-        super()._pickup_()
-
-    def _render_(self):
-        super()._render_()
-        self._render_nested_()
-        self._screen_.on_container_render(self)
-
-    def _derender_(self):
-        super()._derender_()
-        self._screen_.on_container_derender(self)
-        # self._derender_nested_()
+    def _deformat_(self, pos_spec, dim_spec):
+        super()._deformat_(pos_spec, dim_spec)
         for widget in self._nested_:
-            if widget.isrendered():
-                widget._derender_()
+            if widget.isformated():
+                widget._deformat_()
+        self._screen_.on_container_deformat(self)
 
-    # def _form_nested_(self):
-    #     raise NotImplementedError(
-    #         f"{type(self).__name__}._form_nested_ not implemented"
-    #     )
+    def _build_(self):
+        raise NotImplementedError(f"{type(self).__name__}._build_() not implemented")
+        # Template:
+        super()._build_()
+        # container subcless specific build code here
+        self._screen_.on_container_build(self)
 
-    # def _deform_nested_(self):
-    #         f"{type(self).__name__}._deform_nested_ not implemented"
-    #     )
+    def _demolish_(self):
+        for widget in self._nested_:
+            if widget.isbuilt():
+                widget._demolish_()
+        super()._demolish_()
+        self._screen_.on_container_demolish()
 
-    def _place_nested_(self):
-        raise NotImplementedError(
-            f"{type(self).__name__}._place_nested_ not implemented"
-        )
+    def _show_(self):
+        super()._show_()
+        raise NotImplementedError(f"{type(self).__name__}._show_() not implemented")
+        self._screen_.on_container_show()
 
-    def _pickup_nested_(self):
-        raise NotImplementedError(
-            f"{type(self).__name__}._pickup_nested_ not implemented"
-        )
-
-    def _render_nested_(self):
-        raise NotImplementedError(
-            f"{type(self).__name__}._render_nested_ not implemented"
-        )
-
-    # def _derender_nested_(self):
-    #     raise NotImplementedError(
-    #         f"{type(self).__name__}._derender_nested_ not implemented"
-    #     )
+    def _hide_(self):
+        for widget in self._nested_:
+            if widget.isshowing():
+                widget._hide_()
+        super()._hide_()
+        self._screen_.on_container_hide()
 
     def __del__(self):
         super().__del__()

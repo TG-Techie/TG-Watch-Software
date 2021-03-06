@@ -32,19 +32,14 @@ _layout_class_to_method_name = {
 
 
 class Layout(Container):
-    def _form_(self, dim_spec):
-        super(Container, self)._form_(dim_spec)
-
-    def _deform_(self, dim_spec):
-        super(Container, self)._deform_()
-
-    def _place_(self, pos_spec):
+    def _format_(self, pos_spec, dim_spec):
         global _layout_class_to_method_name
-        super(Container, self)._form_(self, pos_spec)
+
+        super(Container, self)._format_(pos_spec, dim_spec)
 
         layoutcls = self._screen_.layout_class
 
-        for cls, method_name in _layout_class_to_method_name.values():
+        for cls, method_name in _layout_class_to_method_name.items():
             if layoutcls is cls:
                 if hasattr(self, method_name):
                     getattr(self, method_name)()
@@ -56,19 +51,19 @@ class Layout(Container):
                 f"{layoutcls} is not a valid layout class, no corresonding method"
             )
 
-    def _render_(self):
-        self._screen_.on_container_pickup(self)
-        for wid in self._nested_:
-            wid._pickup_()
-        Widget._pickup_(self)
+    def _build_(self):
+        super(Container, self)._build_()
+        self._screen_.on_container_build(self)
+        for widget in self._nested_:
+            if widget.isformated():
+                widget._build_()
+
+    def _show_(self):
+        super(Container, self)._show_()
+        for widget in self._nested_:
+            widget._show_()
 
     def _any_(self):
         raise NotImplementedError(
             f"layout methods must be written for subclasses of layout"
         )
-
-    # def _wearable_(self):
-    #     self._any_()
-    #
-    # def _mobile_(self, width: SizeClass, height: SizeClass):
-    #     self._any_()

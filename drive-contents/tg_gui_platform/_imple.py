@@ -64,7 +64,7 @@ else:
         def __repr__(self):
             owner = self._owner
             owner_str = " " + repr(owner) if owner is not None else ""
-            return f"<Group ({self._max_size}){owner_str}>"
+            return f"<Group id:{id(self)} ({self._max_size}){owner_str}>"
 
         def _repr_with_children(self):
             return f"<Group ({self._max_size}){[self[index] for index in range(len(self))]}>"
