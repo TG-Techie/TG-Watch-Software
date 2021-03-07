@@ -39,7 +39,7 @@ class State:
         self._repr = repr
 
     def update(self, updater, value):
-        # print(f"{self}.update({updater}, {value})")
+        # print(f"{self}.update({updater}, {value}) from {self._value}")
         if value != self._value:
             self._value = value
             self._alert_registered(updater)
@@ -54,13 +54,17 @@ class State:
         """
         For using states as values in functions, great for button actions.
         """
-        return self._value
+        # print(f"{self}.__get__({owner}, {ownertype})", self._registered)
+        return self.value(None)  # called with None as a `.some_state` doesn't care
 
     def __set__(self, owner, value):
         """
         For using states as values in functions, great for button actions.
         """
-        self.update(owner, value)
+        # print(f"{self}.__set__({owner}, {value})", self._registered)
+        self.update(
+            None, value
+        )  # called with None as an assignmetn should update everybody
 
     def _register_handler_(self, key, handler):
         if key is None:
@@ -91,13 +95,20 @@ class State:
             # print(self, subscriber_id, handler, value)
             if key is not excluded_key:
                 handler(value)
+            # else:
+            #     print("excluding", key)
 
-    def __rshift__(self, fn):
-        return DerivedState(self, fn)
+    # trial sytaxes
+    def derive(self, transform):
+        return DerivedState(self, transform)
+
+    __rshift__ = __call__ = into = derive
 
     @classmethod
     def __bool__(cls):
-        raise TypeError(f"'{cls.__name__}' objects cannot be cast to bools")
+        raise TypeError(
+            f"'{cls.__name__}' objects cannot be cast to bools, use a DerivedState"
+        )
 
     def __invert__(self):
         return DerivedState(self, _not)

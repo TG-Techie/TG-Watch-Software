@@ -25,6 +25,8 @@ from ._imple import *
 # from tg_gui_core.pages import Pages
 import gc
 
+debug_file = const(0)  # 0 for false, 1 for true
+
 
 class DisplayioScreen(Screen):
 
@@ -59,20 +61,25 @@ class DisplayioScreen(Screen):
             del widget._group
 
     def on_widget_show(self, widget: Widget):
-        # print(f"on_widget_show(_, {widget}): ", end="")
+        if debug_file:
+            print(f"on_widget_show(_, {widget}): ", end="")
         # link into this implenations version of pressing
         if hasattr(widget, "_selected_"):
-            # print("selectable", end=" ")
+            if debug_file:
+                print("selectable", end=" ")
             self._selectbles_.append(widget)
         if hasattr(widget, "_press_"):
-            # print("pressable", end=" ")
+            if debug_file:
+                print("pressable", end=" ")
             self._pressables_.append(widget)
         if hasattr(widget, "_update_coord_"):
-            # print("update-coord", end=" ")
+            if debug_file:
+                print("update-coord", end=" ")
             self._updateables_.append(
                 widget,
             )
-        print()
+        if debug_file:
+            print()
         # show the widget on the screen by adding it to the element tree
         if widget._group is not None:
             # print(widget, widget._superior_, widget._superior_._group)
@@ -86,17 +93,17 @@ class DisplayioScreen(Screen):
         # remove this wqidget form this platofroms ui interaction
         if widget in self._selectbles_:
             self._selectbles_.remove(widget)
-            if widget in self._selectbles_:
+            if debug_file and widget in self._selectbles_:
                 raise RuntimeError(f"double _selectbles_ error {widget}")
 
         if widget in self._pressables_:
             self._pressables_.remove(widget)
-            if widget in self._pressables_:
+            if debug_file and widget in self._pressables_:
                 raise RuntimeError(f"double _pressables_ error {widget}")
 
         if widget in self._updateables_:
             self._updateables_.remove(widget)
-            if widget in self._updateables_:
+            if debug_file and widget in self._updateables_:
                 raise RuntimeError(f"double _updateables_ error {widget}")
 
     # container tie-ins

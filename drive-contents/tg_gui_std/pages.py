@@ -40,13 +40,13 @@ class PageState(State):
         return value
 
     def __get__(self, owner, ownertype):
-        return owner._pages_[self.value(owner)]
+        return owner._pages_[self.value(None)]
 
     def __set__(self, owner, value):
         assert (
             value in owner._pages_
         ), f"cannot switch to {owner} to page {value}, that page is not in its pages"
-        self.update(self, owner._pages_.index(value))
+        self.update(None, owner._pages_.index(value))
 
 
 @declarable
@@ -108,6 +108,9 @@ class Pages(Container):
         self._current_page = None
         self._hot_rebuild = _hot_rebuild
 
+    def __len__(self):
+        return len(self._pages_)
+
     def _on_nest_(self):
         for widget in self._pages_:
             self._nest_(widget)
@@ -131,6 +134,7 @@ class Pages(Container):
 
         self._screen_.on_container_build(self)
 
+        # print(f"registering {self} with {self._state}")
         self._state._register_handler_(self, self._switch_page)
 
     def _demolish_(self):
@@ -147,6 +151,7 @@ class Pages(Container):
         super(Container, self)._hide_()
 
     def _switch_page(self, index):
+        # print(f"{self}._switch_page{index}")
         if self.isshowing():
             self._current_page._hide_()
         if self._hot_rebuild:
