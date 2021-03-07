@@ -19,7 +19,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-from ._split_container import _SplitContainer, Container
+from ._split_container import _SplitContainer, Container, centerto
 
 
 class VSplit(_SplitContainer):
@@ -27,11 +27,17 @@ class VSplit(_SplitContainer):
         super(Container, self)._format_(pos_spec, dim_spec)
 
         sub_width = self.width
+
         sub_height = self.height // len(self._widgets)
+
+        sub_x = sub_width // 2
+        sub_y_offset = sub_height // 2
+
+        sub_size = (sub_width, sub_height)
 
         for row, widget in enumerate(self._widgets):
             if widget is not None:
                 widget._format_(
-                    (0, sub_height * row),
-                    (sub_width, sub_height),
+                    centerto((sub_x, sub_height * row + sub_y_offset)),
+                    sub_size,
                 )

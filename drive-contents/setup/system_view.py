@@ -1,7 +1,7 @@
 import gc
 import os
 
-from tg_gui_core import *
+from tg_gui_core import State, self
 from tg_gui_std.all import Rect, Pages, PageState, Label
 
 from setup.watchface import default_face
@@ -16,6 +16,7 @@ if "preferred.txt" in apps_dir_contents:
         preferred_app_to_load = preferred_app.read().strip()
     if len(preferred_app_to_load) == 0:
         preferred_app_to_load = None
+    del preferred_app
 else:
     preferred_app_to_load = None
 
@@ -26,32 +27,30 @@ public_apps = [app_dir for app_dir in availble_apps if not app_dir.startswith("_
 
 if (preferred_app_to_load in availble_apps) or (len(public_apps) > 0):
     if preferred_app_to_load in availble_apps:
+        # assumes the None object is not valid directory
         app_dir = preferred_app_to_load
     else:
         app_dir = public_apps[0]
+    print(f"loading '{app_dir}' out of {availble_apps}")
     app_module = __import__(f"/apps/{app_dir}")
     app_widget = app_module.Application
 else:
     app_widget = Label(text="No App Loaded")
 
-
-# for later
-# apps = {}
-# for app in availble_apps:
-#     if not app.startswith("_"):
-#         mod = __import__(f"/apps/{app}")
-#         app_obj = mod.Application
-#         del mod
-#         apps[app] = app_obj
+del (
+    app_module,
+    app_dir,
+    preferred_app_to_load,
+    availble_apps,
+    public_apps,
+    apps_dir_contents,
+)
 
 
 class SystemView(Pages):
 
-    # page = PageState(self.face)
-    page = PageState(
-        0,  # REQUIRES PATCH to allow for specifying by name
-        # mode=PageState.mode.page_widget,
-    )
+    page = PageState(self.face)
+    # page = State(0)
 
     face = default_face
     shade = shade

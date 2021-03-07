@@ -510,8 +510,8 @@ class Container(Widget):
             + " see tg_gui_core/base.py for the template"
         )
         # Template:
-        super()._format_(pos_spec, dim_spec)
         # container subcless specific format code here
+        super()._format_(pos_spec, dim_spec)
 
     def _deformat_(self, pos_spec, dim_spec):
         super()._deformat_(pos_spec, dim_spec)
