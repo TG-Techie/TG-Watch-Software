@@ -84,7 +84,6 @@ class DimensionExpression:
 
     def _calc_dim(self, dims):
         ops = _operations
-        print(self)
         running_value = dims[0] if self._is_horizontal else dims[1]
         for op, value in self._operation_sequence:
             # if it is also a DimExpr, simplify it

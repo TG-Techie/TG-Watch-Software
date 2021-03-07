@@ -30,7 +30,6 @@ class VSplit(_SplitContainer):
         sub_height = self.height // len(self._widgets)
 
         for row, widget in enumerate(self._widgets):
-            print(self, row, widget)
             if widget is not None:
                 widget._format_(
                     (0, sub_height * row),

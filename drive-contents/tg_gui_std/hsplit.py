@@ -30,7 +30,6 @@ class HSplit(_SplitContainer):
         sub_width = self.width // len(self._widgets)
 
         for row, widget in enumerate(self._widgets):
-            print(self, row, widget)
             if widget is not None:
                 widget._format_(
                     (sub_width * row, 0),

@@ -89,7 +89,7 @@ class AttributeSpecifier:
             assert isinstance(
                 self._previous_spec, AttributeSpecifier
             ), f"found {src_thing}"
-            fromthis = self._previous_spec._get_attribute_(widget)
+            fromthis = self._previous_spec._get_attribute_(src_thing)
         # do not store the attr in self b/c widget it could change on a re-place
         return getattr(fromthis, self._attr_name)
 

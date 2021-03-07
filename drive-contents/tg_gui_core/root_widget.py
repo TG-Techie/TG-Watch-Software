@@ -77,13 +77,13 @@ class Root(Container):
         gc.collect()
 
         # finally
-        print(f"showing root {self}")
+        # print(f"showing root {self}")
         self._show_()
-        print(f"shown")
+        # print(f"shown")
 
     def _format_(self, check):
         assert check is None  # exists to ensure proper use
-        print(self, self._wrapped_widget)
+        # print(self, self._wrapped_widget)
         self._wrapped_widget._format_((0, 0), self._size_)
 
     def _deformat_(self):
