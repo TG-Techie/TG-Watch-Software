@@ -46,7 +46,7 @@ print(gc.mem_free())
 SWIPE_HEIGHT = const(15)
 SWIPE_WIDTH = const(20)
 
-debug_new = True
+debug_new = False
 if debug_new:
 
     @DisplayioRootWrapper(screen=screen, display=display, size=(240, 240))
@@ -96,32 +96,6 @@ if debug_new:
             switcher.page = (
                 switcher.page1 if switcher.page == switcher.page2 else switcher.page2
             )
-
-    # @DisplayioRootWrapper(screen=screen, display=display, size=(240, 240))
-    # class WatchRoot(Layout):
-    #     value = State(0.5)
-    #     indicator = State(False)
-    #     timestr = DerivedState((clock.hours, clock.mins), lambda h, m: f"{h:02}:{m:02}")
-    #
-    #     split = VSplit(
-    #         HSplit(
-    #             Label(text=value >> (lambda s: f"{round(s, 3)}")),
-    #             ProgressBar(progress=value),
-    #         ),
-    #         Slider(value=value),
-    #         HSplit(
-    #             Label(text=timestr),
-    #             # Rect(fill=indicator >> (lambda i: color.green if i else color.red)),
-    #             Hide(Rect(), when=~indicator),
-    #         ),
-    #         Button(text="foo", press=self.toggle_color),
-    #     )
-    #
-    #     def _any_(self):
-    #         split = self.split(center, (self.width, self.height))
-    #
-    #     def toggle_color(self):
-    #         self.indicator = not self.indicator
 
 
 else:
