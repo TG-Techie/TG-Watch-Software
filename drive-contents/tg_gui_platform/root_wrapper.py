@@ -45,26 +45,45 @@ class DisplayioScreen(Screen):
         self._updateables_ = []
 
     def on_widget_nest_in(_, widget: Widget):
+        pass
+
+    def on_widget_unnest_from(_, widget: Widget):
+        pass
+
+    def on_widget_build(self, widget: Widget):
         if not hasattr(widget, "_group"):
             widget._group = None
 
-    def on_widget_unnest_from(_, widget: Widget):
+    def on_widget_demolish(self, widget: Widget):
         if hasattr(widget, "_group"):
             del widget._group
 
-    def on_widget_build(self, widget: Widget):
+    def on_widget_show(self, widget: Widget):
+        # print(f"on_widget_show(_, {widget}): ", end="")
         # link into this implenations version of pressing
         if hasattr(widget, "_selected_"):
+            # print("selectable", end=" ")
             self._selectbles_.append(widget)
         if hasattr(widget, "_press_"):
+            # print("pressable", end=" ")
             self._pressables_.append(widget)
         if hasattr(widget, "_update_coord_"):
+            # print("update-coord", end=" ")
             self._updateables_.append(
                 widget,
             )
+        print()
+        # show the widget on the screen by adding it to the element tree
+        if widget._group is not None:
+            # print(widget, widget._superior_, widget._superior_._group)
+            widget._superior_._group.append(widget._group)
 
-    def on_widget_demolish(self, widget: Widget):
-        # link out-of this implenations version of pressing
+    def on_widget_hide(self, widget: Widget):
+        # if it is on the screen, remove it
+        if widget._group in widget._superior_._group:
+            widget._superior_._group.remove(widget._group)
+
+        # remove this wqidget form this platofroms ui interaction
         if widget in self._selectbles_:
             self._selectbles_.remove(widget)
             if widget in self._selectbles_:
@@ -79,19 +98,6 @@ class DisplayioScreen(Screen):
             self._updateables_.remove(widget)
             if widget in self._updateables_:
                 raise RuntimeError(f"double _updateables_ error {widget}")
-
-    def on_widget_show(_, widget: Widget):
-        # print(f"on_widget_show(_, {widget})")
-        # show the widget on the screen by adding it to the element tree
-        if widget._group is not None:
-            # print(widget, widget._superior_, widget._superior_._group)
-            widget._superior_._group.append(widget._group)
-
-    def on_widget_hide(_, widget: Widget):
-        # print(f"on_widget_hide(_, {widget})")
-        # if it is on the screen, remove it
-        if widget._group in widget._superior_._group:
-            widget._superior_._group.remove(widget._group)
 
     # container tie-ins
     def on_container_build(_, widget: Widget):
