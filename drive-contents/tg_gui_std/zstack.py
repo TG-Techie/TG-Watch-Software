@@ -19,18 +19,25 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-from tg_gui_core.base import Container, centerto
+from tg_gui_core.base import *
 
 
-class _SplitContainer(Container):
+class ZStack(Container):
     def __init__(self, *widgets, **kwargs):
         self._widgets = widgets
         super().__init__(**kwargs)
 
     def _on_nest_(self):
         for widget in self._widgets:
-            if widget is not None:
-                self._nest_(widget)
+            self._nest_(widget)
+        self._widgets = None
+
+    def _format_(self, pos_spec, dim_spec):
+        super(Container, self)._format_(pos_spec, dim_spec)
+
+        size = self._size_
+        for widget in self._nested_:
+            widget._format_(center, size)
 
     def _build_(self):
         super(Container, self)._build_()
