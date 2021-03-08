@@ -19,7 +19,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-from tg_gui_core.base import Container, Widget
+from tg_gui_core.base import Container, Widget, center
 from tg_gui_core.stateful import State
 
 
