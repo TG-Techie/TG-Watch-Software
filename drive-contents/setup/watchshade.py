@@ -6,6 +6,7 @@ import time
 import system
 from system import display
 
+
 import hardware
 import microcontroller
 
@@ -20,8 +21,6 @@ def _should_be_sys_reset():
 @singleinstance
 class shade(Pages):
     page = PageState(0, mode=_PageStateModes.page_widget)
-
-    temp_brightness = None
 
     open_stack = []
 
@@ -55,7 +54,6 @@ class shade(Pages):
         open_time = Button(
             text="time",
             radius=ratio(height // 2),
-            # press=self._superior_.open_page(self._superior_.time_panel),
             press=self._superior_.pop_view(),
         )
 
@@ -63,24 +61,19 @@ class shade(Pages):
             text="torch",
             radius=ratio(height // 2),
             press=self._superior_.open_page(self._superior_.torch_panel),
+
         )
 
         reset = Button(text="Reset", press=_should_be_sys_reset)
 
         def _wearable_(self):
             slider = self.slider((center, top), (self.width, self.height // 4))
-
             open_time = self.open_time(
                 (left, center),
-                (self.width // 2, self.height // 4),
+                (115, 59),
             )
-
             # done = self.done((center, bottom), (self.width, self.height // 4))
             reset = self.reset((right, center), (self.width // 2, self.height // 4))
-            open_torch = self.open_torch(
-                (left, below(reset)),
-                (self.width // 2, self.height // 4),
-            )
 
         def close_shade(self):
             self._superior_.pop_view()
@@ -112,3 +105,4 @@ class shade(Pages):
             super()._derender_()
 
             display.brightness.update(shade.temp_brightness)
+
