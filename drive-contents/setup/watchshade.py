@@ -19,25 +19,27 @@ def _should_be_sys_reset():
 
 @singleinstance
 class shade(Pages):
-    page = PageState(0)
+    page = PageState(self.main_shade)
 
     open_stack = []
 
     def open_page(self, page_to_open):
-        # print(self.open_stack)
         stack = self.open_stack
         if len(stack) == 0 or stack[-1] is not page_to_open:
             stack.append(self.page)
         self.page = page_to_open
-        # print(self.open_stack)
 
     def pop_view(self):
-        # print(self.open_stack)
         if len(self.open_stack):
             self.page = topage = self.open_stack.pop(-1)
         else:
             self.page = self.main_shade
-        # print(self.open_stack)
+
+    def _render_(self):
+        print(self, self.page)
+        if self.page is self.torch_panel:
+            self.page = self.main_shade
+        super()._render_()
 
     @singleinstance
     class main_shade(Layout):
@@ -47,38 +49,50 @@ class shade(Pages):
         open_time = Button(
             text="time",
             radius=ratio(height // 2),
-            press=self._superior_.open_page(self._superior_.time_panel),
+            press=lambda: None,
+        )
+
+        open_torch = Button(
+            text="torch",
+            radius=ratio(height // 2),
+            press=self._superior_.open_page(self._superior_.torch_panel),
         )
 
         reset = Button(text="Reset", press=_should_be_sys_reset)
 
-        def _wearable_(self):
-            slider = self.slider((center, top), (self.width, self.height // 4))
-            open_time = self.open_time(
-                (left, center),
-                (115, 59),
-            )
-            # done = self.done((center, bottom), (self.width, self.height // 4))
-            reset = self.reset((right, center), (self.width // 2, self.height // 4))
+        def _any_(self):
+            slider = self.slider(top, (self.width, self.height // 4))
+            size = (self.width // 2, self.height // 4)
+            open_time = self.open_time((left, center), size)
+            reset = self.reset((right, center), size)
+            open_torch = self.open_torch(below(open_time), size)
 
         def close_shade(self):
             self._superior_.pop_view()
 
     @singleinstance
-    class time_panel(Layout):
-        back = Button(text="<", press=self._superior_.pop_view())
-        fill = State(color.red)
-
-        rect = Rect(fill=fill)
-        but1 = Button(text="Calc", press=self.set_color(color.blue))
-        but2 = Button(text="Calc", press=self.set_color(color.green))
+    class torch_panel(Layout):
+        rect = Rect(fill=color.white)
+        back = Button(
+            text="<",
+            press=self._superior_.pop_view(),
+            margin=default.margin * 2,
+        )
 
         def _any_(self):
-            back = self.back((left, top), (self.width // 4, self.height // 4))
-            size = (self.width // 2, self.height // 2)
-            b1 = self.but1((left, bottom), size)
-            b2 = self.but2((right, bottom), size)
-            r = self.rect((rightof(back), top), size)
+            self.rect(center, self.dims)
+            self.back(
+                (left, top),
+                (7 * self.width // 24, 7 * self.height // 24),
+            )
 
-        def set_color(self, color):
-            self.fill = color
+        def _show_(self):
+            # stash the current brightness so the torch can be full brightness
+            shade.previous_brightness = display.brightness.value(self)
+            display.brightness.update(self, 1.0)
+            super()._show_()
+
+        def _hide_(self):
+            super()._hide_()
+            # always restore the original brightness
+            display.brightness.update(self, shade.previous_brightness)

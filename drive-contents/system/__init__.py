@@ -82,6 +82,7 @@ class clock:
 
 
 class display:
+    _id_ = uid()
 
     brightness = State(1.0)
     _phys_limits = (
@@ -107,6 +108,7 @@ class display:
 
 
 class power:
+    _id_ = uid()
 
     bat_percent = State(0)  # State(100.0)
     _min_percent = 0.0  # 20.0
@@ -121,11 +123,11 @@ class power:
         if now - power._last > 1:
             try:
                 raw = drivers.bat_sensor.cell_percent
-                display._physical_scale = (0.3, 0.8) if raw <= 20 else (0.2, 1.0)
-                display.brightness.update(power, display.brightness._value)
                 scaled = 100.0 * min(
                     max(0, raw - power._min_percent) / power._percent_range, 1.0
                 )
+                display._phys_limits = (0.1, 0.5) if scaled <= 20.0 else (0.2, 1.0)
+                display.brightness.update(power, display.brightness._value)
                 power.bat_percent.update(power, scaled)
                 power._last = now
             except RuntimeError as err:
