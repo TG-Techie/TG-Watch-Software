@@ -35,11 +35,11 @@ class shade(Pages):
         else:
             self.page = self.main_shade
 
-    def _render_(self):
+    def _hide_(self):
         print(self, self.page)
         if self.page is self.torch_panel:
             self.page = self.main_shade
-        super()._render_()
+        super()._hide_()
 
     @singleinstance
     class main_shade(Layout):
