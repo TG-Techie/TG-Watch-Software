@@ -18,15 +18,12 @@ class default_face(Layout):
     )
 
     percent = Label(
-        text=DerivedState(power.bat_percent, lambda b: f"{round(b): 3}%"),
+        text=DerivedState(
+            (power.bat_percent, power.charging),
+            lambda b, s: f"^{round(b):3}%" if s else f"v{round(b):3}%",
+        ),
         size=3,
         _alignment=align.trailing,
-    )
-
-    charge_indicator = Label(
-        text=DerivedState(power.charging, lambda c: f" {c:1}  "),
-        size=3,
-        _alignment=align.leading,
     )
 
     time_lbl = Label(size=7, text=timestr)
@@ -64,4 +61,3 @@ class default_face(Layout):
         # other = self.other_but((left, bottom), launch_size)
 
         self.percent((right, top), (self.width // 3, self.height // 6))
-        self.charge_indicator((left, top), (self.width // 3, self.height // 6))
