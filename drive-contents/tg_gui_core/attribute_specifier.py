@@ -23,24 +23,12 @@
 from .base import Widget
 
 # from . import dimension_specifiers
-from . import position_specifiers
-
-_singleton = lambda cls: cls()
+# from . import position_specifiers
 
 
 class SpecifierConstructor:  # AttributeSpecifier constructor, basically syntactic suger
     def __repr__(self):
         return "<SpecifierConstructor 'self'>"
-
-    # @property
-    # def width(self):
-    #     global dimension_specifiers
-    #     return dimension_specifiers.WidthForwardSpecifier()
-    #
-    # @property
-    # def height(self):
-    #     global dimension_specifiers
-    #     return dimension_specifiers.HeightForwardSpecifier()
 
     def __getattr__(self, attrname):
         global AttributeSpecifier
@@ -49,7 +37,8 @@ class SpecifierConstructor:  # AttributeSpecifier constructor, basically syntact
 
 class AttributeSpecifier:
     def __init__(self, attr_name, *, _previous_spec=None):
-        assert attr_name.startswith("_") == attr_name.startswith(
+        # make sure it does not specify private methods
+        assert attr_name.startswith("_") == attr_name.endswith(
             "_"
         ), f"you cannot specify private attributes, found `.{attr_name}`"
         self._attr_name = attr_name

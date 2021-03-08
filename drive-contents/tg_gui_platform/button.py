@@ -30,7 +30,7 @@ class Button(Widget):
         self._update_colors()
 
     def __repr__(self):
-        return super().__repr__() + f"({self._text_state})"
+        return super().__repr__() + f"({self._text})"
 
     def __init__(
         self,
@@ -51,7 +51,7 @@ class Button(Widget):
         self._y_adj = _y_adj
         self._x_adj = _x_adj
 
-        self._text_state = text
+        self._text = text
         self._alignment = _alignment
         self._size_src = size
 
@@ -61,7 +61,7 @@ class Button(Widget):
         self._press_ = lambda: None
 
     def _pickup_(self):
-        unlink_from_src(widget=self, src=self._text_state)
+        unlink_from_src(widget=self, src=self._text)
         super()._pickup_()
 
     def _select_(self):
@@ -119,25 +119,14 @@ class Button(Widget):
             alignment=self._alignment,
             scale=font_size,
         )
-        self._update_text()
+        self._set_text(self._text)
         self._update_colors()
         group.append(rect)
         group.append(label)
 
-    def _render_(self):
-        self._update_colors()
-        self._update_text()
-        super()._render_()
-
-    def _update_text(self):
-        text = src_to_value(
-            src=self._text_state,
-            widget=self,
-            handler=self._update_text,
-            default=" ",
-        )
+    def _set_text(self, text):
         # hot patch
-        if len(text) == 1:
+        if len(text) <= 1:
             text = f" {text} "
         # print(self, repr(text))
         self._label.text = text

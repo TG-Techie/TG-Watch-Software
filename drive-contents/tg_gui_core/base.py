@@ -58,7 +58,25 @@ def singleinstance(cls):
     return cls()
 
 
-align = ConstantGroup("align", ("leading", "center", "trailing"))
+align = ConstantGroup(
+    "align",
+    (
+        "leading",
+        "center",
+        "trailing",
+    ),
+)
+
+layout_class = ConstantGroup(
+    "size_class",
+    (
+        "wearable",
+        "portrait",
+        "landscape",
+        "desktop",
+        "custom",
+    ),
+)
 
 
 class color:
@@ -129,18 +147,6 @@ class Defaults:
         self._selected_text_ = _selected_text_
 
 
-layout_class = ConstantGroup(
-    "size_class",
-    (
-        "wearable",
-        "portrait",
-        "landscape",
-        "desktop",
-        "custom",
-    ),
-)
-
-# clean up later
 class Screen:
     def __init__(
         self,
@@ -148,7 +154,7 @@ class Screen:
         min_size,
         palettes: Palettes,
         default: Defaults,
-        layout_class: LayoutCls,
+        layout_class: Constant,
         outer: "Screen" = None,
     ):
         self._id_ = uid()
@@ -227,7 +233,6 @@ class Widget:
         self._rel_coord_ = None
         self._phys_coord_ = None
 
-        self._is_linked = False
         self._is_shown = False
 
         self._margin_spec = margin
@@ -292,14 +297,20 @@ class Widget:
     def _build_(self):
         assert self.isplaced()
         self._screen_.on_widget_build(self)  # platform tie-in
-        # self._render_()
-        # self._link_()
 
     def _demolish_(self):
-        assert self.isrendered()
+        assert self.isbuilt()
         self._screen_.on_widget_demolish(self)  # platform tie-in
-        # self._unlink_()
-        # self._derender_()
+
+    def _show_(self):
+        assert self.isnested()
+        self._is_shown = True
+        self._screen_.on_widget_show(self)
+
+    def _hide_(self):
+        assert self.isshowing()
+        self._is_shown = False
+        self._screen_.on_widget_hide(self)
 
     def _nest_in_(self, superior):
         """
@@ -373,7 +384,7 @@ class Widget:
 
     def _place_(self, pos_spec):
         assert self.isformed(), f"{self} must be sized to place it, it's not"
-        assert not self.isplaced()
+        assert not self.isplaced(), f"{self} already placed"
 
         # format coord
         if isinstance(pos_spec, PositionSpecifier):
@@ -413,30 +424,6 @@ class Widget:
         self._phys_coord_ = None
         self._phys_end_coord_ = None
 
-    # def _link_(self):
-    #     self._is_linked = True
-    #
-    # def _unlink_(self):
-    #     self._is_linked = False
-    #
-    # def _render_(self):
-    #     assert self.isplaced()
-    #     self._screen_.on_widget_build(self)  # platform tie-in
-    #
-    # def _derender_(self):
-    #     assert self.isrendered()
-    #     self._screen_.on_widget_demolish(self)  # platform tie-in
-
-    def _show_(self):
-        assert self.isnested()
-        self._is_shown = True
-        self._screen_.on_widget_show(self)
-
-    def _hide_(self):
-        assert self.isshowing()
-        self._is_shown = False
-        self._screen_.on_widget_hide(self)
-
     def _on_nest_(self):
         pass
 
@@ -447,14 +434,15 @@ class Widget:
         # deconstruct from current stage
         if self.isshowing():
             self._hide_()
-        if self.isrendered():
-            self._derender_()
+        if self.isbuilt():
+            self._demolish_()
         if self.isplaced():
             self._pickup_()
         if self.isformed():
             self._deform_()
         if self.isnested():
             self._superior_._unnest_(self)
+
         # remove double links
         self._superior_ = None
         self._screen_ = None
@@ -535,7 +523,7 @@ class Container(Widget):
             if widget.isbuilt():
                 widget._demolish_()
         super()._demolish_()
-        self._screen_.on_container_demolish()
+        self._screen_.on_container_demolish(self)
 
     def _show_(self):
         raise NotImplementedError(
@@ -545,7 +533,7 @@ class Container(Widget):
         # Tempalte:
         super()._show_()
         # container subcless specific show code here
-        self._screen_.on_container_show()
+        self._screen_.on_container_show(self)
 
     def _hide_(self):
         for widget in self._nested_:

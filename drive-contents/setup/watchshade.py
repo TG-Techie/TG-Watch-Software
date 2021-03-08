@@ -20,6 +20,7 @@ def _should_be_sys_reset():
 @singleinstance
 class shade(Pages):
     page = PageState(self.main_shade)
+    # _hot_rebuild_ = True
 
     open_stack = []
 

@@ -50,16 +50,17 @@ del (
 class SystemView(Pages):
 
     page = PageState(self.face)
-    # page = State(0)
+    _hot_rebuild_ = None
 
     face = default_face
     shade = shade
 
-    app_page = PageState(0)
-    apptray = Pages(
-        show=app_page,
-        pages=(app_widget,),
-    )
+    # app_page = PageState(0)
+    apptray = app_widget
+    # apptray = Pages(
+    #     show=app_page,
+    #     pages=(app_widget,),
+    # )
 
     open_stack = []
 

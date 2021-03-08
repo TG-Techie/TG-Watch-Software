@@ -45,7 +45,7 @@ class Hide(Container):
 
     def _place_(self, pos_spec):
         super()._place_(pos_spec)
-        self._subject._place_((0, 0))
+        self._subject._place_(center)
 
     def _build_(self):
         super(Container, self)._build_()

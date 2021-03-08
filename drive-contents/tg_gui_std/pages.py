@@ -54,8 +54,14 @@ class Pages(Container):
 
     _full_refresh_ = True  # shhhh. this may be a hack, tbd
 
-    def __init__(self, show=None, pages=None, _hot_rebuild=False):
+    def __init__(self, show=None, pages=None, _hot_rebuild_=None):
         super().__init__()
+
+        if hasattr(self, "_hot_rebuild_") and _hot_rebuild_ is None:
+            _hot_rebuild_ = self._hot_rebuild_
+        if _hot_rebuild_ is None:
+            _hot_rebuild_ = False
+        print(self, _hot_rebuild_)
 
         # determin if is called, declared, or invalid
         was_declared = show is None and pages is None
@@ -84,7 +90,7 @@ class Pages(Container):
         self._state = show
         self._pages = pages
         self._current_page = None
-        self._hot_rebuild = _hot_rebuild
+        self._hot_rebuild = _hot_rebuild_
 
     def __len__(self):
         return len(self._nested_)
@@ -105,11 +111,11 @@ class Pages(Container):
 
         self._current_page = current_page = self._nested_[self._state.value(self)]
 
-        if not self._hot_rebuild:
+        if self._hot_rebuild:
+            current_page._build_()
+        else:
             for widget in self._nested_:
                 widget._build_()
-        else:
-            current_page._build_()
 
         self._screen_.on_container_build(self)
 
@@ -134,14 +140,21 @@ class Pages(Container):
         if self.isshowing():
             self._current_page._hide_()
         if self._hot_rebuild:
+            print("before demo", gc.mem_free(), end=" ")
             self._current_page._demolish_()
+            gc.collect()
+            print("after demo", gc.mem_free(), end=" ")
 
         self._screen_.on_container_hide(self)
         self._current_page = to_show = self._nested_[index]
         self._screen_.on_container_show(self)
 
         if self._hot_rebuild:
+            print("before build", gc.mem_free(), end=" ")
             to_show._build_()
+            gc.collect()
+            print("after build", gc.mem_free(), end=" ")
+            print()
         if self.isshowing():
             to_show._show_()
 

@@ -123,7 +123,7 @@ class DisplayioScreen(Screen):
         # widget._screen_._root_.refresh_whole()
 
     def on_container_demolish(_, widget: Widget):
-        del widget._group
+        # del widget._group
         widget._group = None
 
     def on_container_show(_, widget: Widget, _full_refresh=False):

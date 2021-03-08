@@ -39,7 +39,6 @@ class State:
         self._repr = repr
 
     def update(self, updater, value):
-        # print(f"{self}.update({updater}, {value}) from {self._value}")
         if value != self._value:
             self._value = value
             self._alert_registered(updater)
@@ -54,24 +53,20 @@ class State:
         """
         For using states as values in functions, great for button actions.
         """
-        # print(f"{self}.__get__({owner}, {ownertype})", self._registered)
-        return self.value(None)  # called with None as a `.some_state` doesn't care
+        return self.value(self)  # called with self as a `.some_state` doesn't care
 
     def __set__(self, owner, value):
         """
         For using states as values in functions, great for button actions.
         """
-        # print(f"{self}.__set__({owner}, {value})", self._registered)
-        self.update(
-            None, value
-        )  # called with None as an assignmetn should update everybody
+        self.update(self, value)
+        # called with self as an assignmetn should update everybody
 
     def _register_handler_(self, key, handler):
         if key is None:
             self._single_upate_handlers.append(handler)
         elif key not in self._registered:
             if hasattr(key, "_id_"):
-                # print(self, "key_src = ", key)
                 key = key._id_
             self._registered[key] = handler
 
@@ -92,11 +87,8 @@ class State:
         for handler in self._single_upate_handlers:
             handler(value)
         for key, handler in self._registered.items():
-            # print(self, subscriber_id, handler, value)
             if key is not excluded_key:
                 handler(value)
-            # else:
-            #     print("excluding", key)
 
     # trial sytaxes
     def derive(self, transform):
@@ -192,7 +184,6 @@ class StatefulAttribute:
         return value
 
     def __set__(self, owner, value):
-        # print('__set__', self, owner, value)
         if value != self._get_val(owner):
             setattr(owner, self._privname, value)
             if self._updatefn is not None:

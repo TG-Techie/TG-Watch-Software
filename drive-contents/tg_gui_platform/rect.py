@@ -58,7 +58,7 @@ class Rect(Widget):
     def _demolish_(self):
         if isinstance(self._fill_state, State):
             self._fill_state._deregister_handler_(self)
-        super()._derender_()
+        super()._demolish_()
 
     def _update_color(self, fill):
 
