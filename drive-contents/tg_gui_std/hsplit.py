@@ -40,3 +40,4 @@ class HSplit(_SplitContainer):
                     centerto((sub_width * row + sub_x_offset, sub_y)),
                     sub_size,
                 )
+        self._widgets = None

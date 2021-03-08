@@ -65,7 +65,7 @@ class Slider(Widget):
         self._bar = bar = imple.ProgressBar(
             0,  # knob_dim // 2,  # 0,
             rh // 2 - 6,
-            rw - knob_dim,
+            rw,
             12,
             stroke=0,
             bar_color=self._palette.fill_color,

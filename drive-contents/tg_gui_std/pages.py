@@ -36,17 +36,17 @@ class PageState(State):
         value = self._value
         if isinstance(value, AttributeSpecifier):
             page = self._value._get_attribute_(reader)
-            value = self._value = reader._pages_.index(page)
+            value = self._value = reader._nested_.index(page)
         return value
 
     def __get__(self, owner, ownertype):
-        return owner._pages_[self.value(None)]
+        return owner._nested_[self.value(None)]
 
     def __set__(self, owner, value):
         assert (
-            value in owner._pages_
+            value in owner._nested_
         ), f"cannot switch to {owner} to page {value}, that page is not in its pages"
-        self.update(None, owner._pages_.index(value))
+        self.update(None, owner._nested_.index(value))
 
 
 @declarable
@@ -104,30 +104,31 @@ class Pages(Container):
             )
 
         self._state = show
-        self._pages_ = pages
+        self._pages = pages
         self._current_page = None
         self._hot_rebuild = _hot_rebuild
 
     def __len__(self):
-        return len(self._pages_)
+        return len(self._nested_)
 
     def _on_nest_(self):
-        for widget in self._pages_:
+        for widget in self._pages:
             self._nest_(widget)
+        self._pages = None
 
     def _format_(self, pos_spec, dim_spec):
         super(Container, self)._format_(pos_spec, dim_spec)
         size = self._size_
-        for widget in self._pages_:
+        for widget in self._nested_:
             widget._format_((0, 0), size)
 
     def _build_(self):
         super(Container, self)._build_()
 
-        self._current_page = current_page = self._pages_[self._state.value(self)]
+        self._current_page = current_page = self._nested_[self._state.value(self)]
 
         if not self._hot_rebuild:
-            for widget in self._pages_:
+            for widget in self._nested_:
                 widget._build_()
         else:
             current_page._build_()
@@ -158,7 +159,7 @@ class Pages(Container):
             self._current_page._demolish_()
 
         self._screen_.on_container_hide(self)
-        self._current_page = to_show = self._pages_[index]
+        self._current_page = to_show = self._nested_[index]
         self._screen_.on_container_show(self)
 
         if self._hot_rebuild:

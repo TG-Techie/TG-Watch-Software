@@ -41,3 +41,4 @@ class VSplit(_SplitContainer):
                     centerto((sub_x, sub_height * row + sub_y_offset)),
                     sub_size,
                 )
+        self._widgets = None
