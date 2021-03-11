@@ -8,6 +8,7 @@ from digitalio import DigitalInOut
 from adafruit_ds3231 import DS3231
 from adafruit_focaltouch import Adafruit_FocalTouch
 from adafruit_lc709203f import LC709203F
+from adafruit_lsm6ds import LSM6DSOX
 
 
 def deinit():
@@ -32,6 +33,12 @@ def deinit():
     global bat_sensor
     try:
         bat_sensor.deinit()
+    except:
+        pass
+
+    global accel
+    try:
+        accel.deinit()
     except:
         pass
 
@@ -69,6 +76,8 @@ try:
     rtc = DS3231(ports.i2c)
 
     bat_sensor = LC709203F(ports.i2c)
+
+    accel = LSM6DSOX(ports.i2c)
 
     vbus_detect = DigitalInOut(board.VBUS_PRESENT)
     vbus_detect.switch_to_input()
