@@ -84,7 +84,17 @@ class Label(Widget):
         super()._demolish_()
 
     def _update_text(self, text):
+        # hot patch for a cp library bug
+        global align
+        alignment = self._alignment
+        if alignment is align.center:
+            padding = " {} "
+        elif alignment is align.leading:
+            padding = "{} "
+        else:  # alignment is align.trailing:
+            padding = " {}"
 
         while len(text) <= 3:
-            text = f" {text} "
+            text = padding.format(text)
+
         self._group.text = text
