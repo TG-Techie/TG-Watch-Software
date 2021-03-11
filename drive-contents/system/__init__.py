@@ -132,7 +132,7 @@ class power:
 
 class sensors:
     gyro = (State(0), State(0), State(0))
-    accelerometer = (State(0), State(0), State(0))
+    accelerometer = (State(0), State(0), State(-9.8))
 
     _last = time.monotonic()
 
