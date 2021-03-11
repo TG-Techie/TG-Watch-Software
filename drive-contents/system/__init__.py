@@ -131,22 +131,19 @@ class power:
 
 
 class sensors:
-    gyro_x = State(0)
-    gyro_y = State(0)
-    gyro_z = State(0)
-    accelerometer_x = State(0)
-    accelerometer_y = State(0)
-    accelerometer_z = State(0)
+    gyro = (State(0), State(0), State(0))
+    accelerometer = (State(0), State(0), State(0))
+
+    _last = time.monotonic()
 
     def _refresh():
         now = time.monotonic()
-        if now - power._last > 1:
-            sensors.gyro_x.update(hardware.accel.gyro[0])
-            sensors.gyro_y.update(hardware.accel.gyro[1])
-            sensors.gyro_z.update(hardware.accel.gyro[2])
-            sensors.accelerometer_x.update(hardware.accel.acceleration[0])
-            sensors.accelerometer_y.update(hardware.accel.acceleration[1])
-            sensors.accelerometer_z.update(hardware.accel.acceleration[2])
+        if now - sensors._last > 1:
+            for i in range(3):
+                sensors.gyro[i].update(drivers.accel.gyro[i])
+            for i in range(3):
+                sensors.accelerometer[i].update(drivers.accel.acceleration[i])
+            sensors._last = now
 
 
 def _refresh():

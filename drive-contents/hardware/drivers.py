@@ -8,7 +8,7 @@ from digitalio import DigitalInOut
 from adafruit_ds3231 import DS3231
 from adafruit_focaltouch import Adafruit_FocalTouch
 from adafruit_lc709203f import LC709203F
-from adafruit_lsm6ds import LSM6DSOX
+from adafruit_lsm6ds.lsm6dsox import LSM6DSOX
 
 
 def deinit():
