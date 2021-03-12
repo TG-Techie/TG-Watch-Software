@@ -8,6 +8,7 @@ from digitalio import DigitalInOut
 from adafruit_ds3231 import DS3231
 from adafruit_focaltouch import Adafruit_FocalTouch
 from adafruit_lc709203f import LC709203F
+from adafruit_drv2605 import DRV2605
 
 
 def deinit():
@@ -41,6 +42,12 @@ def deinit():
     except:
         pass
 
+    global haptic
+    try:
+        haptic.deinit()
+    except:
+        pass
+
 
 def _reset_touchscreen(pin):
     # global touchscreen_reset
@@ -55,7 +62,18 @@ def _reset_touchscreen(pin):
     time.sleep(0.3)
 
 
+def _enable_haptic():
+    haptic_enable.value = 1
+
+
+def _disable_haptic():
+    haptic_enable.value = 0
+
+
 try:
+    haptic_enable = DigitalInOut(board.HAPTIC_ENABLE)
+    haptic_enable.switch_to_output()
+
     touchscreen_reset = DigitalInOut(board.CTP_RST)
     touchscreen_reset.switch_to_output()
 
@@ -69,6 +87,10 @@ try:
     rtc = DS3231(ports.i2c)
 
     bat_sensor = LC709203F(ports.i2c)
+
+    _enable_haptic()
+    # haptic = DRV2605(ports.i2c, address=0x5E)
+    haptic = DRV2605(ports.i2c, address=0x5A)
 
     vbus_detect = DigitalInOut(board.VBUS_PRESENT)
     vbus_detect.switch_to_input()
