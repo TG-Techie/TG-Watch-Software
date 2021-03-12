@@ -89,7 +89,8 @@ try:
     bat_sensor = LC709203F(ports.i2c)
 
     _enable_haptic()
-    haptic = DRV2605(ports.i2c, address=0x5E)
+    # haptic = DRV2605(ports.i2c, address=0x5E)
+    haptic = DRV2605(ports.i2c, address=0x5A)
 
     vbus_detect = DigitalInOut(board.VBUS_PRESENT)
     vbus_detect.switch_to_input()
