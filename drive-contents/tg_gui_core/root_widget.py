@@ -71,7 +71,8 @@ class Root(Container):
 
     def _std_startup_(self):
         # self does not need to be formated as it already has form and position
-        self._format_(None)
+        self._form_(None)
+        self._place_(None)
         gc.collect()
         self._build_()
         gc.collect()
@@ -81,13 +82,21 @@ class Root(Container):
         self._show_()
         # print(f"shown")
 
-    def _format_(self, check):
+    def _form_(self, check):
         assert check is None  # exists to ensure proper use
         # print(self, self._wrapped_widget)
-        self._wrapped_widget._format_((0, 0), self._size_)
+        self._wrapped_widget._form_(self._size_)
 
-    def _deformat_(self):
-        self._wrapped_widget._deformat_()
+    def _deform_(self):
+        self._wrapped_widget._deform_()
+
+    def _place_(self, check):
+        assert check is None  # exists to ensure proper use
+        # print(self, self._wrapped_widget)
+        self._wrapped_widget._place_((0, 0))
+
+    def _pickup_(self):
+        self._wrapped_widget._pickup_()
 
     def _build_(self):
         self._screen_.on_widget_build(self)

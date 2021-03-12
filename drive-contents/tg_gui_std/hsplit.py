@@ -23,21 +23,30 @@ from ._split_container import _SplitContainer, Container, centerto
 
 
 class HSplit(_SplitContainer):
-    def _format_(self, pos_spec, dim_spec):
-        super(Container, self)._format_(pos_spec, dim_spec)
+    def _form_(self, dim_spec):
+        super(Container, self)._form_(dim_spec)
 
         sub_height = self.height
         sub_width = self.width // len(self._widgets)
 
-        sub_y = sub_height // 2
-        sub_x_offset = sub_width // 2
-
         sub_size = (sub_width, sub_height)
+
+        for widget in self._nested_:
+
+            widget._form_(
+                sub_size,
+            )
+
+    def _place_(self, pos_spec):
+        super(Container, self)._place_(pos_spec)
+
+        sub_width = self.width // len(self._widgets)
+        sub_y = self.height // 2
+        sub_x_offset = sub_width // 2
 
         for row, widget in enumerate(self._widgets):
             if widget is not None:
-                widget._format_(
-                    centerto((sub_width * row + sub_x_offset, sub_y)),
-                    sub_size,
+                widget._place_(
+                    centerto(sub_width * row + sub_x_offset, sub_y),
                 )
         self._widgets = None

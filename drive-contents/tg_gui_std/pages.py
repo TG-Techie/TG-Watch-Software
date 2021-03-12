@@ -23,7 +23,7 @@
 import gc
 
 from tg_gui_core.stateful import State
-from tg_gui_core.base import Container, Widget, declarable
+from tg_gui_core.base import Container, Widget, declarable, center
 from tg_gui_core.attribute_specifier import AttributeSpecifier
 
 
@@ -100,11 +100,16 @@ class Pages(Container):
             self._nest_(widget)
         self._pages = None
 
-    def _format_(self, pos_spec, dim_spec):
-        super(Container, self)._format_(pos_spec, dim_spec)
+    def _form_(self, dim_spec):
+        super(Container, self)._form_(dim_spec)
         size = self._size_
         for widget in self._nested_:
-            widget._format_((0, 0), size)
+            widget._form_(size)
+
+    def _place_(self, pos_spec):
+        super(Container, self)._place_(pos_spec)
+        for widget in self._nested_:
+            widget._place_(center)
 
     def _build_(self):
         super(Container, self)._build_()

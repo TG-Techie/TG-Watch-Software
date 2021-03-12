@@ -262,10 +262,8 @@ class Widget:
     def isplaced(self):
         return self._coord_ is not None  # and self.isnested()
 
-    isformated = isplaced
-
     def isbuilt(self):
-        return self.isformated() and self._screen_.widget_is_built(self)
+        return self.isplaced() and self._screen_.widget_is_built(self)
 
     def isshowing(self):
         return self._is_shown
@@ -281,18 +279,10 @@ class Widget:
             owner._nest_(self)
         return self
 
-    # placement sugar, still in flux (keep near _format_)
     def __call__(self, pos_spec, dim_spec):
-        self._format_(pos_spec, dim_spec)
-        return self
-
-    def _format_(self, pos_spec, dim_spec):
         self._form_(dim_spec)
         self._place_(pos_spec)
-
-    def _deformat_(self):
-        self._pickup_()
-        self._deform_()
+        return self
 
     def _build_(self):
         assert self.isplaced()
@@ -492,21 +482,35 @@ class Container(Widget):
         while widget in self._nested_:
             self._nested_.remove(widget)
 
-    def _format_(self, pos_spec, dim_spec):
+    def _form_(self, dim_spec):
         raise NotImplementedError(
-            f"{type(self).__name__}._format_(...) not implemented,"
+            f"{type(self).__name__}._form_(...) not implemented,"
             + " see tg_gui_core/base.py for the template"
         )
         # Template:
-        # container subcless specific format code here
-        super()._format_(pos_spec, dim_spec)
+        # container subcless specific form code here
+        super(Container, self)._form_(dim_spec)
 
-    def _deformat_(self, pos_spec, dim_spec):
-        super()._deformat_(pos_spec, dim_spec)
+    def _deform_(self):
         for widget in self._nested_:
-            if widget.isformated():
-                widget._deformat_()
-        self._screen_.on_container_deformat(self)
+            if widget.isformed():
+                widget._deform_()
+        super()._deform_()
+
+    def _place_(self, pos_spec):
+        raise NotImplementedError(
+            f"{type(self).__name__}._place_(...) not implemented,"
+            + " see tg_gui_core/base.py for the template"
+        )
+        # Template:
+        super(Container, self)._place_(pos_spec)
+        # container subcless specific place code here
+
+    def _pickup_(self):
+        for widget in self._nested_:
+            if widget.isplaced():
+                widget._pickup_()
+        super()._deform_()
 
     def _build_(self):
         raise NotImplementedError(
@@ -514,7 +518,7 @@ class Container(Widget):
             + " see tg_gui_core/base.py for the template"
         )
         # Template:
-        super()._build_()
+        super(Container, self)._build_()
         # container subcless specific build code here
         self._screen_.on_container_build(self)
 
@@ -531,7 +535,7 @@ class Container(Widget):
             + " see tg_gui_core/base.py for the template"
         )
         # Tempalte:
-        super()._show_()
+        super(Container, self)._show_()
         # container subcless specific show code here
         self._screen_.on_container_show(self)
 

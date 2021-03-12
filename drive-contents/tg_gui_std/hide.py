@@ -36,15 +36,12 @@ class Hide(Container):
     def _on_nest_(self):
         self._nest_(self._subject)
 
-    # bypass Container's as the implenation is lower level
-    _format_ = Widget._format_
-
     def _form_(self, dim_spec):
         self._subject._form_(dim_spec)
         super(Container, self)._form_(self._subject.dims)
 
     def _place_(self, pos_spec):
-        super()._place_(pos_spec)
+        super(Container, self)._place_(pos_spec)
         self._subject._place_(center)
 
     def _build_(self):
