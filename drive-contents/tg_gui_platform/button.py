@@ -125,7 +125,7 @@ class Button(Widget):
             default=" ",
         )
         # hot patch
-        if len(text) == 1:
+        while len(text) <= 3:
             text = f" {text} "
         # print(self, repr(text))
         self._label.text = text
