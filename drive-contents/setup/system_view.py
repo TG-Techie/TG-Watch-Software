@@ -2,35 +2,47 @@ import gc
 import os
 
 from tg_gui_core import *
-from tg_gui_std.all import Rect, Pages, PageState
+from tg_gui_std.all import Rect, Pages, PageState, Label
 
 from setup.watchface import default_face
 from setup.watchshade import shade
 
-APP_TO_LOAD = "hex_mixer"
+# scan and choose an app to load
+apps_dir_contents = os.listdir("/apps")
 
-apps = {}
-appfolders = os.listdir("/apps")
-for app in (app for app in appfolders if not app.startswith("_")):
-    # with open(f"/apps/{app}/info.json") as file:
-    #     try:
-    #         info = json.load(file)
-    #     except:
-    #         print(f"unable to load app info {file(file)}")
-    #         continue
-    mod = __import__(f"/apps/{app}")
-    app_obj = mod.Application
-    del mod
-    apps[app] = app_obj
-    # launch_widget = LaunchWidget.frominfo(f"/apps/{app}", info)
-    # apps[app] = launch_widget
+# if there is a preferred.txt read it in
+if "preferred.txt" in apps_dir_contents:
+    with open("apps/preferred.txt", "r") as preferred_app:
+        preferred_app_to_load = preferred_app.read().strip()
+    if len(preferred_app_to_load) == 0:
+        preferred_app_to_load = None
+else:
+    preferred_app_to_load = None
 
-app_page_state = PageState(0)
-app_pages = Pages(
-    show=app_page_state,
-    pages=(apps[APP_TO_LOAD],),  # tuple(apps.values()),
-    # _buffered=False,
-)
+# filter for file
+availble_apps = [app_dir for app_dir in apps_dir_contents if "." not in app_dir]
+# filter for public apps
+public_apps = [app_dir for app_dir in availble_apps if not app_dir.startswith("_")]
+
+if (preferred_app_to_load in availble_apps) or (len(public_apps) > 0):
+    if preferred_app_to_load in availble_apps:
+        app_dir = preferred_app_to_load
+    else:
+        app_dir = public_apps[0]
+    app_module = __import__(f"/apps/{app_dir}")
+    app_widget = app_module.Application
+else:
+    app_widget = Label(text="No App Loaded")
+
+
+# for later
+# apps = {}
+# for app in availble_apps:
+#     if not app.startswith("_"):
+#         mod = __import__(f"/apps/{app}")
+#         app_obj = mod.Application
+#         del mod
+#         apps[app] = app_obj
 
 
 class SystemView(Pages):
@@ -44,8 +56,11 @@ class SystemView(Pages):
     face = default_face
     shade = shade
 
-    app_page = app_page_state
-    apptray = app_pages
+    app_page = PageState(0)
+    apptray = Pages(
+        show=app_page,
+        pages=(app_widget,),
+    )
 
     open_stack = []
 
