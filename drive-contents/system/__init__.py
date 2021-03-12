@@ -111,6 +111,7 @@ class power:
     _id_ = uid()
 
     bat_percent = State(0)  # State(100.0)
+    charging = State(False)
     _min_percent = 0.0  # 20.0
     _max_percent = 95.0
 
@@ -129,6 +130,7 @@ class power:
                 display._phys_limits = (0.1, 0.5) if scaled <= 20.0 else (0.2, 1.0)
                 display.brightness.update(power, display.brightness._value)
                 power.bat_percent.update(power, scaled)
+                power.charging.update(power, drivers.vbus_detect.value)
                 power._last = now
             except RuntimeError as err:
                 print(f"{time.monotonic()}: battery read failed: `{err}`")
