@@ -34,12 +34,11 @@ if (preferred_app_to_load in availble_apps) or (len(public_apps) > 0):
     print(f"loading '{app_dir}' out of {availble_apps}")
     app_module = __import__(f"/apps/{app_dir}")
     app_widget = app_module.Application
+    del app_module, app_dir
 else:
     app_widget = Label(text="No App Loaded")
 
 del (
-    app_module,
-    app_dir,
     preferred_app_to_load,
     availble_apps,
     public_apps,
