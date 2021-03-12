@@ -8,11 +8,11 @@ import math
 class Application(Layout):
     percent_x = DerivedState(
         sensors.accelerometer,
-        lambda y, x, z: abs(x / math.sqrt(x ** 2 + y ** 2 + z ** 2)),
+        lambda x, y, z: abs(x / math.sqrt(x ** 2 + y ** 2 + z ** 2)),
     )
     percent_y = DerivedState(
         sensors.accelerometer,
-        lambda y, x, z: abs(y / math.sqrt(x ** 2 + y ** 2 + z ** 2)),
+        lambda x, y, z: abs(y / math.sqrt(x ** 2 + y ** 2 + z ** 2)),
     )
 
     x_label = Label(text="X:")

@@ -147,10 +147,12 @@ class sensors:
     def _refresh():
         now = time.monotonic()
         if now - sensors._last > 1:
-            for i in range(3):
-                sensors.gyro[i].update(sensors, drivers.accel.gyro[i])
-            for i in range(3):
-                sensors.accelerometer[i].update(sensors, drivers.accel.acceleration[i])
+            y, x, z = drivers.accel.acceleration
+            for state, value in zip(sensors.accelerometer, (x, y, z)):
+                state.update(sensors, value)
+            y, x, z = drivers.accel.gyro
+            for state, value in zip(sensors.gyro, (x, y, z)):
+                state.update(sensors, value)
             sensors._last = now
 
 
