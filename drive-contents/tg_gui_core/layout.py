@@ -33,10 +33,13 @@ _layout_class_to_method_name = {
 
 @declarable
 class Layout(Container):
-    def _format_(self, pos_spec, dim_spec):
+
+    _form_ = Widget._form_
+
+    def _place_(self, pos_spec):
         global _layout_class_to_method_name
 
-        super(Container, self)._format_(pos_spec, dim_spec)
+        super(Container, self)._place_(pos_spec)
 
         layoutcls = self._screen_.layout_class
 
@@ -56,7 +59,7 @@ class Layout(Container):
         super(Container, self)._build_()
         self._screen_.on_container_build(self)
         for widget in self._nested_:
-            if widget.isformated():
+            if widget.isplaced():
                 widget._build_()
 
     def _show_(self):

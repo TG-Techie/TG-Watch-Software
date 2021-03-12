@@ -35,7 +35,7 @@ class _SplitContainer(Container):
     def _build_(self):
         super(Container, self)._build_()
         for widget in self._nested_:
-            if widget.isformated():
+            if widget.isplaced():
                 widget._build_()
         self._screen_.on_container_build(self)
 
