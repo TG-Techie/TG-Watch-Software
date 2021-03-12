@@ -56,34 +56,32 @@ class Label(Widget):
         if self._palette is None:
             self._palette = screen.palettes.primary
 
-    def _place_(self, coord, dims):
+    def _build_(self):
         global imple
 
-        super()._place_(coord, dims)
+        super()._build_()
 
         self._group = group = imple.Label(
             text="___",
             color=self._palette.text_color,
             coord=self._rel_coord_,
-            dims=self._phys_dims_,
+            dims=self._phys_size_,
             alignment=self._alignment,
             scale=self._size,
         )
 
-    def _render_(self):
         # self._update_color()
         text_state = self._text_state
         if isinstance(text_state, State):
             text_state._register_handler_(self, self._update_text)
-            self._update_text(text_state.value())
+            self._update_text(text_state.value(self))
         else:
             self._update_text(text_state)
-        super()._render_()
 
-    def _derender_(self):
+    def _demolish_(self):
         if isinstance(self._text_state, State):
             self._text_state._deregister_handler_(self)
-        super()._derender_()
+        super()._demolish_()
 
     def _update_text(self, text):
         # hot patch for a cp library bug

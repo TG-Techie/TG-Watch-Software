@@ -1,5 +1,4 @@
 from tg_gui_std.all import *
-from tg_gui_std.pages import _PageStateModes  # hack until internal changes
 from system.applocals import *
 
 import time
@@ -20,7 +19,8 @@ def _should_be_sys_reset():
 
 @singleinstance
 class shade(Pages):
-    page = PageState(0, mode=_PageStateModes.page_widget)
+    page = PageState(self.main_shade)
+    # _hot_rebuild_ = True
 
     open_stack = []
 
@@ -36,11 +36,11 @@ class shade(Pages):
         else:
             self.page = self.main_shade
 
-    def _render_(self):
+    def _hide_(self):
         print(self, self.page)
         if self.page is self.torch_panel:
             self.page = self.main_shade
-        super()._render_()
+        super()._hide_()
 
     @singleinstance
     class main_shade(Layout):
@@ -87,13 +87,13 @@ class shade(Pages):
                 (7 * self.width // 24, 7 * self.height // 24),
             )
 
-        def _render_(self):
+        def _show_(self):
             # stash the current brightness so the torch can be full brightness
-            shade.previous_brightness = display.brightness.value()
-            display.brightness.update(1.0)
-            super()._render_()
+            shade.previous_brightness = display.brightness.value(self)
+            display.brightness.update(self, 1.0)
+            super()._show_()
 
-        def _derender_(self):
-            super()._derender_()
+        def _hide_(self):
+            super()._hide_()
             # always restore the original brightness
-            display.brightness.update(shade.previous_brightness)
+            display.brightness.update(self, shade.previous_brightness)

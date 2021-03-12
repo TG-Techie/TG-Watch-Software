@@ -35,7 +35,7 @@ def has_phys_coord_in(widget, coord, _print=False):
     #
     minx, miny = widget._phys_coord_
     x, y = coord
-    maxx, maxy = widget._phys_end_coord
+    maxx, maxy = widget._phys_end_coord_
     return (minx <= x <= maxx) and (miny <= y <= maxy)
 
 
@@ -83,6 +83,7 @@ class SinglePointEventLoop:
     #     self.__mode = value
 
     def loop(self):
+        # print(self._screen._pressables_)
 
         # get previous data
         was_touched = self._was_touched

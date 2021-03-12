@@ -38,13 +38,29 @@ class PositionSpecifier:
 
 
 class centerto(PositionSpecifier):
+    def __init__(self, ref, _arg2=None):
+        if _arg2 is not None:
+            ref = (ref, _arg2)
+
+        super().__init__(ref)
+
     def _calc_x_(self, inst):
-        # default to centered
-        return self._ref.x + self._ref.width // 2 - inst.width // 2
+        # account for exact coords
+        ref = self._ref
+        if isinstance(ref, tuple):
+            center_x = ref[0]
+        else:
+            center_x = ref.x + ref.width // 2
+        return center_x - inst.width // 2
 
     def _calc_y_(self, inst):
-        # default to centered
-        return self._ref.y + self._ref.height // 2 - inst.height // 2
+        # account for exact coords
+        ref = self._ref
+        if isinstance(ref, tuple):
+            center_y = ref[1]
+        else:
+            center_y = ref.y + ref.height // 2
+        return center_y - inst.height // 2
 
 
 class leftof(PositionSpecifier):

@@ -24,6 +24,10 @@ from .base import *
 from .attribute_specifier import AttributeSpecifier
 
 
+def _not(obj):
+    return not obj
+
+
 class State:
     def __init__(self, value, repr=repr):
         self._id_ = uid()
@@ -34,12 +38,12 @@ class State:
 
         self._repr = repr
 
-    def update(self, value):
+    def update(self, updater, value):
         if value != self._value:
             self._value = value
-            self._alert_registered()
+            self._alert_registered(updater)
 
-    def value(self):
+    def value(self, reader):
         return self._value
 
     def __repr__(self):
@@ -49,13 +53,14 @@ class State:
         """
         For using states as values in functions, great for button actions.
         """
-        return self._value
+        return self.value(self)  # called with self as a `.some_state` doesn't care
 
     def __set__(self, owner, value):
         """
         For using states as values in functions, great for button actions.
         """
-        self.update(value)
+        self.update(self, value)
+        # called with self as an assignmetn should update everybody
 
     def _register_handler_(self, key, handler):
         if key is None:
@@ -64,6 +69,7 @@ class State:
             if hasattr(key, "_id_"):
                 key = key._id_
             self._registered[key] = handler
+
         else:
             raise ValueError(f"{self} already has a handler registered for  {key}")
 
@@ -74,12 +80,30 @@ class State:
         if key in registered:
             registered.pop(key)
 
-    def _alert_registered(self):
+    def _alert_registered(self, excluded):
+        excluded_key = getattr(excluded, "_id_", excluded)
+
         value = self._value
         for handler in self._single_upate_handlers:
             handler(value)
-        for handler in self._registered.values():
-            handler(value)
+        for key, handler in self._registered.items():
+            if key is not excluded_key:
+                handler(value)
+
+    # trial sytaxes
+    def derive(self, transform):
+        return DerivedState(self, transform)
+
+    __rshift__ = __call__ = into = derive
+
+    @classmethod
+    def __bool__(cls):
+        raise TypeError(
+            f"'{cls.__name__}' objects cannot be cast to bools, use a DerivedState"
+        )
+
+    def __invert__(self):
+        return DerivedState(self, _not)
 
 
 class DerivedState(State):
@@ -109,10 +133,10 @@ class DerivedState(State):
 
     def _update_from_sources(self, _):
         value = self._derive_new_state()
-        super().update(value)
+        super().update(self, value)
 
     def _derive_new_state(self):
-        substates = [state.value() for state in self._states]
+        substates = [state.value(self) for state in self._states]
         return self._fn(*substates)
 
     def _register_with_sources(self):
@@ -160,7 +184,6 @@ class StatefulAttribute:
         return value
 
     def __set__(self, owner, value):
-        # print('__set__', self, owner, value)
         if value != self._get_val(owner):
             setattr(owner, self._privname, value)
             if self._updatefn is not None:
