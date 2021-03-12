@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 """
-This file is under active development.
+This file is under active development. (it also requires some docs and commentsm, blame TG-Techie)
 """
 
 from .constant_groups import ConstantGroup

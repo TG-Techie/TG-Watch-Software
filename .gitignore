@@ -1,6 +1,8 @@
 # Watch specific
 drive-contents/boot_out.txt
+drive-contents/lib
 .DS_Store
+*/.DS_Store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

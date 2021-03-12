@@ -26,11 +26,15 @@ from setup.watchsetup import (
     event_loop,
     Layout,
     Button,
+    Label,
     Rect,
     singleinstance,
 )
 
 from tg_gui_std.all import Pages, PageState
+from tg_gui_std.all import *
+import system
+from system import clock
 
 print(gc.mem_free())
 
@@ -79,8 +83,12 @@ swipedown._last_coord_ = lambda coord: (
 )
 print(gc.mem_free())
 
-
+gc.collect()
+print(WatchRoot)
 WatchRoot._superior_._std_startup_()
+
+g = WatchRoot._superior_._group
+print(g, g[0])
 gc.collect()
 
 # a = Rect(fill=color.red)

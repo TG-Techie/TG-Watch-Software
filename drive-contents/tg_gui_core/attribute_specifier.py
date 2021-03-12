@@ -23,24 +23,12 @@
 from .base import Widget
 
 # from . import dimension_specifiers
-from . import position_specifiers
-
-_singleton = lambda cls: cls()
+# from . import position_specifiers
 
 
 class SpecifierConstructor:  # AttributeSpecifier constructor, basically syntactic suger
     def __repr__(self):
         return "<SpecifierConstructor 'self'>"
-
-    # @property
-    # def width(self):
-    #     global dimension_specifiers
-    #     return dimension_specifiers.WidthForwardSpecifier()
-    #
-    # @property
-    # def height(self):
-    #     global dimension_specifiers
-    #     return dimension_specifiers.HeightForwardSpecifier()
 
     def __getattr__(self, attrname):
         global AttributeSpecifier
@@ -49,7 +37,8 @@ class SpecifierConstructor:  # AttributeSpecifier constructor, basically syntact
 
 class AttributeSpecifier:
     def __init__(self, attr_name, *, _previous_spec=None):
-        assert attr_name.startswith("_") == attr_name.startswith(
+        # make sure it does not specify private methods
+        assert attr_name.startswith("_") == attr_name.endswith(
             "_"
         ), f"you cannot specify private attributes, found `.{attr_name}`"
         self._attr_name = attr_name
@@ -67,18 +56,31 @@ class AttributeSpecifier:
         else:
             return f"{self._previous_spec._attr_name_chain()}.{self._attr_name}"
 
-    def _get_attribute_(self, fromobj):
+    def _get_attribute_(self, src_thing):
         global AttributeSpecifier
-        if self._previous_spec is None:
-            assert isinstance(fromobj, Widget), f"found {fromobj}"
-            fromobj = fromobj._superior_
-        else:
+
+        is_first = self._previous_spec is None
+
+        if is_first and isinstance(src_thing, Widget):
+            fromthis = src_thing
+            # account for non containers
+            if not hasattr(fromthis, "_decalrable_"):
+                fromthis = src_thing._superior_
+            # find the nearest superior that is declarable
+            while fromthis._decalrable_ is False:
+                fromthis = fromthis._superior_
+                if fromthis is None:
+                    raise TypeError(f"{self} not used in a declaration")
+        elif is_first:
+            # get it directly from here
+            fromthis = src_thing
+        else:  # get it from up the attrspec tree
             assert isinstance(
                 self._previous_spec, AttributeSpecifier
-            ), f"found {fromobj}"
-            fromobj = self._previous_spec._get_attribute_(fromobj)
-        # do not store the attr in self b/c fromobj it could change on a re-place
-        return getattr(fromobj, self._attr_name)
+            ), f"found {src_thing}"
+            fromthis = self._previous_spec._get_attribute_(src_thing)
+        # do not store the attr in self b/c widget it could change on a re-place
+        return getattr(fromthis, self._attr_name)
 
     def __getattr__(self, attr_name):
         # chain constructor

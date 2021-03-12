@@ -25,116 +25,140 @@ from ._imple import *
 # from tg_gui_core.pages import Pages
 import gc
 
+debug_file = const(0)  # 0 for false, 1 for true
+
 
 class DisplayioScreen(Screen):
 
     _nest_count_override = 1
 
     def __init__(self, *, display, **kwargs):
-        self._display_ = display
-        self._root_ = None
         if not isinstance(display, displayio.Display):
             raise TypeError(
                 f"screen must be of type 'Display', found '{type(self).__name__}'"
             )
         super().__init__(**kwargs)
 
+        self._display_ = display
+        self._root_ = None
+
         self._selectbles_ = []
         self._pressables_ = []
         self._updateables_ = []
 
-    def on_widget_nest_in(_, wid: Widget):
-        if not hasattr(wid, "_group"):
-            wid._group = None
+    def on_widget_nest_in(_, widget: Widget):
+        pass
 
-    def on_widget_unnest_from(_, wid: Widget):
-        if hasattr(wid, "_group"):
-            del wid._group
+    def on_widget_unnest_from(_, widget: Widget):
+        pass
 
-    def on_widget_render(self, wid: Widget):
-        if wid._group is not None:
-            sgroup = wid._superior_._group
-            group = wid._group
-            wid._superior_._group.append(group)
+    def on_widget_build(self, widget: Widget):
+        if not hasattr(widget, "_group"):
+            widget._group = None
 
-        if hasattr(wid, "_selected_"):
-            self._selectbles_.append(wid)
-        if hasattr(wid, "_press_"):
-            self._pressables_.append(wid)
-        if hasattr(wid, "_update_coord_"):
+    def on_widget_demolish(self, widget: Widget):
+        if hasattr(widget, "_group"):
+            del widget._group
+
+    def on_widget_show(self, widget: Widget):
+        if debug_file:
+            print(f"on_widget_show(_, {widget}): ", end="")
+        # link into this implenations version of pressing
+        if hasattr(widget, "_selected_"):
+            if debug_file:
+                print("selectable", end=" ")
+            self._selectbles_.append(widget)
+        if hasattr(widget, "_press_"):
+            if debug_file:
+                print("pressable", end=" ")
+            self._pressables_.append(widget)
+        if hasattr(widget, "_update_coord_"):
+            if debug_file:
+                print("update-coord", end=" ")
             self._updateables_.append(
-                wid,
+                widget,
             )
+        if debug_file:
+            print()
+        # show the widget on the screen by adding it to the element tree
+        if widget._group is not None:
+            # print(widget, widget._superior_, widget._superior_._group)
+            widget._superior_._group.append(widget._group)
 
-    def on_widget_derender(self, wid: Widget):
-        if wid._group is None:
-            pass
-            # while wid._group in wid._superior_._group:
+    def on_widget_hide(self, widget: Widget):
+        # if it is on the screen, remove it
+        if widget._group in widget._superior_._group:
+            widget._superior_._group.remove(widget._group)
+
+        # remove this wqidget form this platofroms ui interaction
+        if widget in self._selectbles_:
+            self._selectbles_.remove(widget)
+            if debug_file and widget in self._selectbles_:
+                raise RuntimeError(f"double _selectbles_ error {widget}")
+
+        if widget in self._pressables_:
+            self._pressables_.remove(widget)
+            if debug_file and widget in self._pressables_:
+                raise RuntimeError(f"double _pressables_ error {widget}")
+
+        if widget in self._updateables_:
+            self._updateables_.remove(widget)
+            if debug_file and widget in self._updateables_:
+                raise RuntimeError(f"double _updateables_ error {widget}")
+
+    # container tie-ins
+    def on_container_build(_, widget: Widget):
+        if hasattr(widget, "_nest_count_override"):
+            group_size = widget._nest_count_override
+
         else:
-            wid._superior_._group.remove(wid._group)
+            group_size = len(widget._nested_)
 
-        if wid in self._selectbles_:
-            self._selectbles_.remove(wid)
-        if wid in self._selectbles_:
-            raise RuntimeError(f"double _selectbles_ error {wid}")
+        rel_x, rel_y = widget._rel_coord_
+        widget._group = Group(
+            x=rel_x,
+            y=rel_y,
+            max_size=group_size,
+        )
+        # widget._screen_._root_.refresh_whole()
 
-        if wid in self._pressables_:
-            self._pressables_.remove(wid)
-        if wid in self._pressables_:
-            raise RuntimeError(f"double _pressables_ error {wid}")
+    def on_container_demolish(_, widget: Widget):
+        # del widget._group
+        widget._group = None
 
-        if wid in self._updateables_:
-            self._updateables_.remove(wid)
-        if wid in self._updateables_:
-            raise RuntimeError(f"double _updateables_ error {wid}")
+    def on_container_show(_, widget: Widget, _full_refresh=False):
+        # print(
+        #     widget,
+        #     widget._full_refresh_
+        #     if hasattr(widget, "_full_refresh_")
+        #     else "does not have",
+        # )
+        if hasattr(widget, "_full_refresh_") and widget._full_refresh_ is True:
+            widget._screen_._root_.refresh_whole()
 
-    def on_container_place(_, wid: Widget):
-        if hasattr(wid, "_nest_count_override"):
-            wid._group = Group(
-                x=wid._rel_x_,
-                y=wid._rel_y_,
-                max_size=max(wid._nest_count_override),
-            )
-        else:
-            wid._group = Group(
-                x=wid._rel_x_,
-                y=wid._rel_y_,
-                max_size=max(
-                    1,
-                    len(wid._nested_),
-                ),
-            )
-        wid._screen_._root_.refresh_whole()
-
-    def on_container_pickup(_, wid: Widget):
-        del wid._group
-        wid._group = None
-
-    def on_container_render(_, wid: Widget, _full_refresh=False):
+    def on_container_hide(_, widget: Widget):
         pass
-        if _full_refresh:
-            wid._screen_._root_.refresh_whole()
+        # if hasattr(widget, "_full_refresh_") and widget._full_refresh_ is True:
+        #     widget._screen_._root_.refresh_whole()
 
-    def on_container_derender(_, wid: Widget):
-        pass
-        # if isinstance(wid, Pages):
-        #     wid._screen_._root_.refresh_whole()
+    def widget_is_built(_, widget: Widget):
+        # print(f"widget_is_built(_, {widget}) -> widget._group={widget._group}")
+        return widget._group is not None
 
 
-class DisplayioRootWrapper(RootWrapper):
-    def __init__(self, *, display, screen, **kwargs):
+class DisplayioRootWrapper(Root):
+    def __init__(self, *, display, screen, size, **kwargs):
         # assert isinstance(display, displayio.Display)
-        self._display = display
-        display.auto_refresh = False
-
         if not isinstance(screen, DisplayioScreen):
             raise TypeError(
                 f"screen must be of type 'DisplayioScreen', found '{type(screen).__name__}'"
             )
 
-        super().__init__(screen=screen, **kwargs)
+        super().__init__(screen=screen, size=size, **kwargs)
 
-        self._group = group = Group(max_size=1)  # only has one child
+        self._display = display
+        display.auto_refresh = False
+
         self.refresh_whole = lambda: None
         screen._root_ = self
 
@@ -144,6 +168,16 @@ class DisplayioRootWrapper(RootWrapper):
         self.refresh_whole = self._refresh_whole
 
     def _refresh_whole(self):
+        # print(f"!!refreshsing whole: {self}")
+        # make the retire tree for re-rendering
         self._display.show(None)
         self._display.show(self._group)
-        self._display.refresh()
+
+    def _show_(self):
+        super()._show_()
+        assert self._group is not None
+        self._display.show(self._group)
+
+    def _hide_(self):
+        super()._hide_()
+        self._display.show(None)

@@ -23,189 +23,170 @@
 import gc
 
 from tg_gui_core.stateful import State
-from tg_gui_core.base import Container, Widget
+from tg_gui_core.base import Container, Widget, declarable, center
 from tg_gui_core.attribute_specifier import AttributeSpecifier
-from tg_gui_core.constant_groups import ConstantGroup
-
-# PageState shoud either have two modes ot two classes with a __new__ method
-# IndexedPageState(0) and IdentityPageState(self.attr)
-# each's __get__ retun eh appropriate type and can only the the apropriat type
-# See if Pages is able to use _nested_ as the index value
-# remeber taht the__get__ and __set__ will be used by a Layout and not the Pages itself
-
-_PageStateModes = ConstantGroup("PageStateMode", ("key", "page_widget"))
 
 
 class PageState(State):
+    """
+    Translates between the pages in
+    """
 
-    mode = _PageStateModes
+    def value(self, reader):
+        value = self._value
+        if isinstance(value, AttributeSpecifier):
+            page = self._value._get_attribute_(reader)
+            value = self._value = reader._nested_.index(page)
+        return value
 
-    def __init__(self, arg, mode=_PageStateModes.key, **kwargs):
-        super().__init__(arg, **kwargs)
-        self._mode = mode
-
-    def __get__(self, owner: object, ownertype: type):
-        global _PageStateModes
-        mode = self._mode
-        if mode is _PageStateModes.key:
-            return super().__get__(owner, ownertype)
-        elif mode is _PageStateModes.page_widget:
-            return owner._pages[super().__get__(owner, ownertype)]
-        else:
-            raise TypeError(
-                f"cannot use {mode} for a PageState mode, "
-                + "only PageState.mode.key or PageState.mode.page"
-            )
+    def __get__(self, owner, ownertype):
+        return owner._nested_[self.value(None)]
 
     def __set__(self, owner, value):
-        global Pages
-        # print(f"{owner}.__set__ : {self} = {value}")
-        is_page_inst = isinstance(value, Widget)
-        # is_page_type = isinstance(value, type) and issubclass(value, Widget)
-        if is_page_inst:
-            for page_key, page_inst in owner._pages.items():
-                if value is page_inst:
-                    value = page_key
-        self.update(value)
+        assert (
+            value in owner._nested_
+        ), f"cannot switch to {owner} to page {value}, that page is not in its pages"
+        self.update(None, owner._nested_.index(value))
 
 
+@declarable
 class Pages(Container):
-    """
-    Pages has two modes of initing
-    - Single instance classes
-    - Widget instances
 
-    Single incstance classes are similar to Single instance `Layout` Classes,
-    subclass `Pages` and set the sub-pages as class attributes:
-    ```python
-    class my_pages(Pages):
-        page = PageState(0)
+    _full_refresh_ = True  # shhhh. this may be a hack, tbd
 
-        page1 = WidgetTypeForPage1()
-        page2 = WidgetTypeForPage3()
-        page3 = WidgetTypeForPage3()
-    ```
+    def __init__(self, show=None, pages=None, _hot_rebuild_=None):
+        super().__init__()
 
-    Widget instances are created by calling `Pages(show=..., pages=...)` where
-    show is a PageState object and pages is a tuple of Widget (to use as pages).
+        if hasattr(self, "_hot_rebuild_") and _hot_rebuild_ is None:
+            _hot_rebuild_ = self._hot_rebuild_
+        if _hot_rebuild_ is None:
+            _hot_rebuild_ = False
+        print(self, _hot_rebuild_)
 
-    You can make re-usbale, pages widgets by subclassing `Pages` and modifying
-    __init__ and passing the pages argument to `super().__init__(...)`.
-    """
+        # determin if is called, declared, or invalid
+        was_declared = show is None and pages is None
+        was_called = show is not None and pages is not None
 
-    def __init__(self, show=None, pages=None, _buffered=True, **kwargs):
-        super().__init__(**kwargs)
+        if was_declared:
+            # find the decalred pages
+            show, pages = self._scan_class_for_pages()
 
-        page = show
-        # scan for class attrs
-        if pages is None and page is None:  # if call
-            cls = type(self)
-            pageattrs = []
-            for attrname in dir(cls):
-                attr = getattr(cls, attrname)
-                if isinstance(attr, Widget):
-                    pageattrs.append(attr)
-                    # pages[attr] = attr
-                elif isinstance(attr, type) and issubclass(attr, Widget):
-                    # pageattrs.append(attr())
-                    raise TypeError(
-                        f"{type(self)} has a class as an attribute, "
-                        + f"this is not poeritted. found {attr}"
-                    )
-                else:
-                    pass
-            else:
-                pageattrs.sort(key=lambda item: item._id_)
-                pages = {index: widget for index, widget in enumerate(pageattrs)}
-            if show is None:
-                if hasattr(cls, "page"):
-                    show = getattr(cls, "page")
-                    assert isinstance(show, PageState), f"found {show}"
-                else:
-                    raise TypeError(
-                        f"{cls} has no attribute page, a `Pages` subclass must "
-                        + "have a `.page` attribute. `page = PageState(0)`"
-                    )
-                # find the widget with the lowest id (as they are chronological)
-                # show = State(0)
-            else:
-                raise TypeError(
-                    "when 'pages' is not specified show must not be either, "
-                    + f"found {show}"
-                )
-        elif isinstance(pages, (tuple, list)):
-            pages = dict(enumerate(pages))
-        elif isinstance(pages, dict):
-            pass
+        elif was_called:
+            assert isinstance(show, State), (
+                f"when calling {type(self).__name__} the 'show' argumetn must "
+                + "be a state or PageState object"
+            )
+            assert isinstance(pages, tuple) and len(pages), (
+                f"when calling {type(self).__name__} the 'pages' argumetn must "
+                + "a tuple with one or more widgets"
+            )
         else:
             raise TypeError(
-                "argument pages must be a tuple, dict, or None, "
-                + f"found {type(self)}"
+                f"{self} incorrectly inited, Pages must be called with a state "
+                + "object and a tuple of pages or subclasses and declared "
+                + "with @singleinstance"
             )
 
-        if _buffered is None and hasattr(self, "_buffered_"):
-            self._buffered = self._buffered_
-        else:
-            self._buffered = _buffered
-
-        self._page_key_src = show
+        self._state = show
         self._pages = pages
-        self._page_key = None
+        self._current_page = None
+        self._hot_rebuild = _hot_rebuild_
 
-    def set_page(self, value):
-        if isinstance(value, AttributeError):
-            value = value._get_attribute_(self)
-        self._page_key_src.update(value)
+    def __len__(self):
+        return len(self._nested_)
 
     def _on_nest_(self):
-        for page in self._pages.values():
-            self._nest_(page)
+        for widget in self._pages:
+            self._nest_(widget)
+        self._pages = None
 
-    def _place_(self, coord, dims):
-        Widget._place_(self, coord, dims)
-        if self._buffered is True:
-            for page in self._pages.values():
-                page._place_((0, 0), self.dims)
-        self._screen_.on_container_place(self)
+    def _form_(self, dim_spec):
+        super(Container, self)._form_(dim_spec)
+        size = self._size_
+        for widget in self._nested_:
+            widget._form_(size)
 
-    def _pickup_(self):
-        self._screen_.on_container_pickup(self)
-        for page in self._pages:
-            page._pickup_()
-        Widget._pickup_(self)
+    def _place_(self, pos_spec):
+        super(Container, self)._place_(pos_spec)
+        for widget in self._nested_:
+            widget._place_(center)
 
-    def _render_(self):
-        Widget._render_(self)
+    def _build_(self):
+        super(Container, self)._build_()
 
-        self._page_key_src._register_handler_(self, self._rerender_pages)
-        self._page_key = page_key = self._page_key_src.value()
+        self._current_page = current_page = self._nested_[self._state.value(self)]
 
-        page = self._pages[page_key]
-        if self._buffered is False:
-            if not page.isplaced():
-                page._place_((0, 0), self.dims)
-        page._render_()
-        self._screen_.on_container_render(self, _full_refresh=True)
+        if self._hot_rebuild:
+            current_page._build_()
+        else:
+            for widget in self._nested_:
+                widget._build_()
 
-    def _derender_(self):
-        page = self._pages[self._page_key]
-        page._derender_()
-        # page._pickup_()
-        # gc.collect()
-        Widget._derender_(self)
-        self._screen_.on_container_derender(self)
-        self._page_key_src._deregister_handler_(self)
+        self._screen_.on_container_build(self)
 
-    def _rerender_pages(self, page_key):
-        self._screen_.on_container_derender(self)
-        page = self._pages[self._page_key]
-        page._derender_()
-        # page._pickup_()
-        # gc.collect()
-        self._page_key = page_key  #  = self._page_key_src.value()
-        page = self._pages[page_key]
-        if self._buffered is False:
-            if not page.isplaced():
-                page._place_((0, 0), self.dims)
-        page._render_()
-        self._screen_.on_container_render(self, _full_refresh=True)
+        # print(f"registering {self} with {self._state}")
+        self._state._register_handler_(self, self._switch_page)
+
+    def _demolish_(self):
+        self._state._deregister_handler_(self)
+        super()._demolish_()
+
+    def _show_(self):
+        super(Container, self)._show_()
+        self._current_page._show_()
+        self._screen_.on_container_show(self)
+
+    def _hide_(self):
+        self._current_page._hide_()
+        super(Container, self)._hide_()
+
+    def _switch_page(self, index):
+        # print(f"{self}._switch_page{index}")
+        if self.isshowing():
+            self._current_page._hide_()
+        if self._hot_rebuild:
+            print("before demo", gc.mem_free(), end=" ")
+            self._current_page._demolish_()
+            gc.collect()
+            print("after demo", gc.mem_free(), end=" ")
+
+        self._screen_.on_container_hide(self)
+        self._current_page = to_show = self._nested_[index]
+        self._screen_.on_container_show(self)
+
+        if self._hot_rebuild:
+            print("before build", gc.mem_free(), end=" ")
+            to_show._build_()
+            gc.collect()
+            print("after build", gc.mem_free(), end=" ")
+            print()
+        if self.isshowing():
+            to_show._show_()
+
+    @classmethod
+    def _scan_class_for_pages(cls):
+
+        # see if the user added a page class attribute(attr)
+        if hasattr(cls, "page"):
+            state = cls.page
+        else:
+            raise TypeError(
+                f"no page stae object declared in {cls}, add `page = State(0)` "
+                + "to  the body"
+            )
+
+        attrs = [getattr(cls, name) for name in dir(cls)]
+        found_pages = []
+        for attr in attrs:
+            if isinstance(attr, Widget):
+                found_pages.append(attr)
+            elif isinstance(attr, type) and issubclass(attr, Widget):
+                raise TypeError(
+                    f"type {attr} found in the body of {cls}, this is not a "
+                    + "valid declaration. did you mean to decorate it "
+                    + "with @singleinstance"
+                )
+            else:
+                pass
+        found_pages.sort(key=lambda widget: widget._id_)
+        return state, tuple(found_pages)

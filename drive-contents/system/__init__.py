@@ -1,4 +1,4 @@
-from tg_gui_core.stateful import State, DerivedState
+from tg_gui_core.stateful import State, DerivedState, uid
 import hardware
 from hardware import drivers
 from . import applocals
@@ -31,6 +31,8 @@ _to_weekday = (
 
 # using classes as modules, technically reduces ram size
 class clock:
+    _id_ = uid()
+
     year = State(0000)
     month = State(00)
     weekday = State(0)
@@ -58,9 +60,9 @@ class clock:
         hours, mins, secs = clock._time
 
         # if is 24 hour time:
-        hours.update(now.tm_hour)
-        mins.update(now.tm_min)
-        secs.update(now.tm_sec)
+        hours.update(clock, now.tm_hour)
+        mins.update(clock, now.tm_min)
+        secs.update(clock, now.tm_sec)
 
         if clock._prev_refresh.tm_hour > now.tm_hour:
             clock._refresh_date()
@@ -72,14 +74,15 @@ class clock:
         now = drivers.rtc.datetime
         year, month, weekday, monthday, yearday = clock._date
 
-        year.update(now.tm_year)
-        month.update(now.tm_mon)
-        monthday.update(now.tm_mday)
-        weekday.update(now.tm_wday)
-        yearday.update(now.tm_yday)
+        year.update(clock, now.tm_year)
+        month.update(clock, now.tm_mon)
+        monthday.update(clock, now.tm_mday)
+        weekday.update(clock, now.tm_wday)
+        yearday.update(clock, now.tm_yday)
 
 
 class display:
+    _id_ = uid()
 
     brightness = State(1.0)
     _phys_limits = (
@@ -105,6 +108,7 @@ class display:
 
 
 class power:
+    _id_ = uid()
 
     bat_percent = State(0)  # State(100.0)
     _min_percent = 0.0  # 20.0
@@ -123,8 +127,8 @@ class power:
                     max(0, raw - power._min_percent) / power._percent_range, 1.0
                 )
                 display._phys_limits = (0.1, 0.5) if scaled <= 20.0 else (0.2, 1.0)
-                display.brightness.update(display.brightness._value)
-                power.bat_percent.update(scaled)
+                display.brightness.update(power, display.brightness._value)
+                power.bat_percent.update(power, scaled)
                 power._last = now
             except RuntimeError as err:
                 print(f"{time.monotonic()}: battery read failed: `{err}`")

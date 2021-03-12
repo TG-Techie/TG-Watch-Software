@@ -24,85 +24,94 @@ import gc
 from .base import *
 
 
-class RootWrapper(Container):
-    def __init__(self, *, screen: Screen, size, startup=False, **kwargs):
+class Root(Container):
+    def __init__(self, *, screen: Screen, size, **kwargs):
         assert len(size) == 2, f"expected two dimensions found, {size}"
 
-        Widget.__init__(self)
+        self._id_ = uid()
 
-        self._superior_ = None
+        # self._superior_ = None
         self._screen_ = screen
 
-        self._nested_ = []
+        self._size_ = size
 
-        self._screen_ = screen
+        self._is_linked = False
+        self._is_shown = False
+
+        self._margin_ = 0  # it is a container after all
+
         self._inst_kwargs = kwargs
-        self._size = size
-        self._startup = startup
+        self._nested_ = []
+        self._wrapped_widget = None
 
     def __call__(self, cls):
-        self._root_wid_inst = root_wid_inst = cls()
+        self._wrapped_widget = root_wid_inst = cls()
         self._nest_(root_wid_inst)
         return root_wid_inst
 
+    # _size_ is raw, exposed
+    _phys_size_ = property(lambda self: self._size_)
+
+    # possibly make settable in the future
+    _coord_ = property(lambda self: (0, 0))
+    _rel_coord_ = property(lambda self: (0, 0))
+    _phys_coord_ = property(lambda self: (0, 0))
+
     @property
-    def _phys_coord_(self):
-        return (0, 0)
+    def _superior_(self):
+        return None
 
     @property
     def wrapped(self):
-        return self._root_wid_inst
-
-    def _place_(self, coord: int, dims: int):
-        assert dims > (0, 0), f"root's dims must be > (0, 0), found {dims}"
-
-        was_on_screen = self.isrendered()
-        if was_on_screen:
-            self._derender_()
-
-        self._placement_ = self._rel_placement_ = (0, 0) + dims
-        self._abs_coord = (0, 0)
-
-        self._place_nested_()
-
-        if was_on_screen:
-            self._render_()
-
-    def _pickup_(self):
-        self._pickup_nested_()
-        Widget._pickup_(self)
-
-    def _render_(self):
-        self._rendered_ = True
-        self._render_nested_()
-
-    def _derender_(self):
-        self._rendered_ = False
-        self._derender_nested_()
-
-    def _place_nested_(self):
-        self._root_wid_inst(*self.fill)
-
-    def _pickup_nested_(self):
-        self._root_wid_inst._pickup_()
-
-    def _render_nested_(self):
-        self._root_wid_inst._render_()
-
-    def _derender_nested_(self):
-        self._root_wid_inst._derender_()
+        return self._wrapped_widget
 
     def isnested(self):
-        raise TypeError(f"roots cannot be nested")
+        # cannot be not nested sooooooo (thus it is always fufilling taht capability)
+        return True
 
     def _std_startup_(self):
-        self._nest_(self._root_wid_inst)
+        # self does not need to be formated as it already has form and position
+        self._form_(None)
+        self._place_(None)
         gc.collect()
-        self._place_((0, 0), self._size)
-        gc.collect()
-        self._render_()
+        self._build_()
         gc.collect()
 
-    # possible future api
-    def _proto_change_layoutcls(self, layoutcls):
-        raise NotImplementedError()
+        # finally
+        # print(f"showing root {self}")
+        self._show_()
+        # print(f"shown")
+
+    def _form_(self, check):
+        assert check is None  # exists to ensure proper use
+        # print(self, self._wrapped_widget)
+        self._wrapped_widget._form_(self._size_)
+
+    def _deform_(self):
+        self._wrapped_widget._deform_()
+
+    def _place_(self, check):
+        assert check is None  # exists to ensure proper use
+        # print(self, self._wrapped_widget)
+        self._wrapped_widget._place_((0, 0))
+
+    def _pickup_(self):
+        self._wrapped_widget._pickup_()
+
+    def _build_(self):
+        self._screen_.on_widget_build(self)
+        self._wrapped_widget._build_()
+        self._screen_.on_container_build(self)
+
+    def _demolish_(self):
+        self._wrapped_widget._demolish_()
+        self._screen_.on_widget_demolish(self)
+        self._screen_.on_container_demolish(self)
+
+    def _show_(self):
+        self._is_shown = True
+        self._wrapped_widget._show_()
+
+    def _hide_(self):
+        self._is_shown = False
+        self._wrapped_widget._hide_()
