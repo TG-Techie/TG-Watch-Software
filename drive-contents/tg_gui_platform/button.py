@@ -29,6 +29,9 @@ class Button(Widget):
     def _selected_(self):
         self._update_colors()
 
+    def __repr__(self):
+        return super().__repr__() + f"({self._text})"
+
     def __init__(
         self,
         *,
@@ -48,15 +51,17 @@ class Button(Widget):
         self._y_adj = _y_adj
         self._x_adj = _x_adj
 
-        self._text_state = text
+        self._text = text
         self._alignment = _alignment
-        self._size = size
+        self._size_src = size
 
         self._press_spec = press
         self._palette = palette
 
+        self._press_ = lambda: None
+
     def _pickup_(self):
-        unlink_from_src(widget=self, src=self._text_state)
+        unlink_from_src(widget=self, src=self._text)
         super()._pickup_()
 
     def _select_(self):
@@ -71,6 +76,11 @@ class Button(Widget):
         if palette is None:
             self._palette = screen.palettes.primary
 
+        font_size = self._size_src
+        if font_size is None:
+            font_size = self._screen_.default.font_size
+        self._font_size = font_size
+
         press_spec = self._press_spec
         if isinstance(press_spec, AttributeSpecifier):
             self._press_ = press_spec._get_attribute_(self)
@@ -79,52 +89,44 @@ class Button(Widget):
         else:
             self._press_ = press_spec
 
-    def _place_(self, coord, dims):
-        global imple
-        super()._place_(coord, dims)
+    def _build_(self):
 
-        size = self._size
-        if size is None:
-            size = self._screen_.default.font_size
+        super()._build_()
 
-        radius = self._radius_src
+        font_size = self._font_size
+
+        self._radius = radius = self._radius_src
         if radius is None:
-            radius = self._screen_.default.radius
+            self._radius = radius = self._screen_.default.radius
         if isinstance(radius, DimensionSpecifier):
-            radius = radius._calc_dim_(self)
+            self._radius = radius = radius._calc_dim_(self)
 
         radius = min(radius, self.width // 2, self.height // 2)
 
         self._group = group = imple.Group(max_size=2)
 
-        self._rect = rect = imple.SimpleRoundRect(*self._rel_placement_, radius=radius)
-        # self._rect = rect = imple.NewRoundRect(*self._rel_placement_, r=radius)
+        self._rect = rect = imple.SimpleRoundRect(
+            *(self._rel_coord_ + self._phys_size_),
+            radius=radius,
+        )
+
+        rel_x, rel_y = self._rel_coord_
         self._label = label = imple.Label(
             text=" ",
             color=0xFFFFFF,  # temp color
-            coord=(self._rel_x_ + self._x_adj, self._rel_y_ + self._y_adj),
-            dims=self._phys_dims_,
+            coord=(rel_x + self._x_adj, rel_y + self._y_adj),
+            dims=self._phys_size_,
             alignment=self._alignment,
-            scale=size,
+            scale=font_size,
         )
-        self._update_text()
+        self._set_text(self._text)
         self._update_colors()
         group.append(rect)
         group.append(label)
 
-    def _render_(self):
-        self._update_colors()
-        self._update_text()
-        super()._render_()
-
-    def _update_text(self):
-        text = src_to_value(
-            src=self._text_state,
-            widget=self,
-            handler=self._update_text,
-            default=" ",
-        )
+    def _set_text(self, text):
         # hot patch
+
         while len(text) <= 3:
             text = f" {text} "
         # print(self, repr(text))

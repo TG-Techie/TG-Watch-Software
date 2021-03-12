@@ -19,55 +19,31 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-
-from .base import Container, Widget, layout_class, declarable
-
-_layout_class_to_method_name = {
-    layout_class.wearable: "_wearable_",
-    layout_class.portrait: "_portrait_",
-    layout_class.landscape: "_landscape_",
-    layout_class.desktop: "_desktop_",
-    layout_class.custom: "_custom_",
-}
+from tg_gui_core.base import Container, centerto
 
 
-@declarable
-class Layout(Container):
+class _SplitContainer(Container):
+    def __init__(self, *widgets, **kwargs):
+        self._widgets = widgets
+        super().__init__(**kwargs)
 
-    _form_ = Widget._form_
-
-    def _place_(self, pos_spec):
-        global _layout_class_to_method_name
-
-        super(Container, self)._place_(pos_spec)
-
-        layoutcls = self._screen_.layout_class
-
-        for cls, method_name in _layout_class_to_method_name.items():
-            if layoutcls is cls:
-                if hasattr(self, method_name):
-                    getattr(self, method_name)()
-                else:
-                    self._any_()
-                break
-        else:
-            raise RuntimeError(
-                f"{layoutcls} is not a valid layout class, no corresonding method"
-            )
+    def _on_nest_(self):
+        for widget in self._widgets:
+            if widget is not None:
+                self._nest_(widget)
 
     def _build_(self):
         super(Container, self)._build_()
-        self._screen_.on_container_build(self)
         for widget in self._nested_:
             if widget.isplaced():
                 widget._build_()
+        self._screen_.on_container_build(self)
 
     def _show_(self):
         super(Container, self)._show_()
-        for widget in self._nested_:
-            widget._show_()
 
-    def _any_(self):
-        raise NotImplementedError(
-            f"layout methods must be written for subclasses of layout"
-        )
+        for widget in self._nested_:
+            if widget.isbuilt():
+                widget._show_()
+
+        self._screen_.on_container_show(self)

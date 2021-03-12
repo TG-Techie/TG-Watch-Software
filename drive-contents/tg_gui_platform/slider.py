@@ -46,23 +46,29 @@ class Slider(Widget):
         if self._palette is None:
             self._palette = self._screen_.palettes.primary
 
-    def _place_(self, coord, dims, knob_dim=None):
-        super()._place_(coord, dims)
+    def _build_(self):
+        super()._build_()
 
         screen = self._screen_
         palette = self._palette
         debug = self._debug
 
-        sx, sy, sw, sh = self._placement_
-        rx, ry, rw, rh = self._rel_placement_
+        sx, sy = self._coord_
+        sw, sh = self._size_
+        rx, ry = self._rel_coord_
+        rw, rh = self._phys_size_
 
-        if knob_dim is None:
-            knob_dim = screen.min_size
+        knob_dim = min(rh, screen.min_size)
 
         self._group = group = imple.Group(x=rx, y=ry, max_size=(4 if debug else 3))
 
         self._bar = bar = imple.ProgressBar(
-            0, rh // 2 - 6, rw, 12, stroke=0, bar_color=self._palette.fill_color
+            0,  # knob_dim // 2,  # 0,
+            rh // 2 - 6,
+            rw,
+            12,
+            stroke=0,
+            bar_color=self._palette.fill_color,
         )
 
         self._knob_outline = knob_outline = imple.SimpleRoundRect(
@@ -92,7 +98,7 @@ class Slider(Widget):
 
         self._knob_dim = knob_dim
         self._span = value_range = rw - knob_dim
-        self._position = pos = int(value_range * self._state.value())
+        self._position = pos = int(value_range * self._state.value(self))
         self._y_limits = (sh // 2 - knob_dim // 2, sh // 2 + knob_dim // 2)
         self._value = pos / value_range
         self._pos_on_prev_update = -10000
@@ -143,7 +149,7 @@ class Slider(Widget):
             # knob = self._knob
             # bar = self._bar
 
-            self._state.update(value)
+            self._state.update(self, value)
             self._value = value
 
             self._knob_outline.x = new_pos

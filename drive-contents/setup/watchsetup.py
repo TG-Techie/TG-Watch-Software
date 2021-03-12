@@ -12,7 +12,7 @@ from tg_gui_platform.root_wrapper import DisplayioRootWrapper, DisplayioScreen
 splash_screen.update_progress(0.70)
 
 screen = DisplayioScreen(
-    layout_class=LayoutCls.wearable,
+    layout_class=layout_class.wearable,
     display=display,
     min_size=50,
     default=Defaults(

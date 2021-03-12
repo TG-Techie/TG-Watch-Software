@@ -18,7 +18,10 @@ class default_face(Layout):
     )
 
     percent = Label(
-        text=DerivedState(power.bat_percent, lambda b: f"{round(b): 3}%"),
+        text=DerivedState(
+            (power.bat_percent, power.charging),
+            lambda b, s: f"^{round(b)}%" if s else f"{round(b)}%",
+        ),
         size=3,
         _alignment=align.trailing,
     )
