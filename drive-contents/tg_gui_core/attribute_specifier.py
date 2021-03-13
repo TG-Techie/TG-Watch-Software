@@ -137,4 +137,4 @@ class ForwardMethodCall:
 
 # for import
 self = SpecifierConstructor()
-superior = self._superior_
+self._superior_ = AttributeSpecifier("_superior_")
