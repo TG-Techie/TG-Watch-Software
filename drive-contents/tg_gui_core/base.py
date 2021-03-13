@@ -406,7 +406,7 @@ class Widget:
         self._phys_end_coord_ = (px + pw, py + ph)
 
     def _pickup_(self):
-        assert not self.isrendered()
+        assert not self.isformed()
         assert self.isplaced()
         # only containers need to worry about when to cover vs replace
         self._coord_ = None
