@@ -91,7 +91,7 @@ class display:
     )
 
     def _set_brightness(brightness):
-        print(f"brightness={brightness}")
+        # print(f"brightness={brightness}")
         global display
         # brightness = display.brightness.getvalue(None, display._set_brightness)
 
