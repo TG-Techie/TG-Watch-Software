@@ -70,119 +70,30 @@ class InheritedAttribute:
         setattr(owner, self._priv_attrname, value)
 
 
-# todo: move color and align to style/theming
-align = ConstantGroup(
-    "align",
-    (
-        "leading",
-        "center",
-        "trailing",
-    ),
-)
-
-
-class color:
-    # TODO: consider make ready only using proerties and lambdas vs performance
-    _clear = None  # tentative
-    red = 0xFF0000
-    orange = 0xFFA500
-    yellow = 0xFFFF00
-    green = 0x00FF00
-    blue = 0x0000FF
-    purple = 0xCC8899
-
-    white = 0xFFFFFF
-    lightgray = 0xC4C4C4
-    gray = 0x909090
-    darkgray = 0x606060
-    black = 0x000000
-
-    def fromfloats(r, g, b):
-        r = round(255 * r ** 1.125)
-        g = round(255 * g ** 1.125)
-        b = round(255 * b ** 1.125)
-        return (r << 16) | (g << 8) | (b << 0)
-
-
-class Palette:
-    def __init__(
-        self,
-        *,
-        fill_color,
-        text_color,
-        selected_text,
-        selected_fill,
-        backfill,
-    ):
-        self.fill_color = fill_color
-        self.selected_fill = selected_fill
-        self.text_color = text_color
-        self.selected_text = selected_text
-        self.backfill = backfill
-
-
-class Palettes:
-    def __init__(self, *, primary, secondary):
-        self.primary = primary
-        self.secondary = secondary
-
-
-class Defaults:
-    def __init__(
-        self,
-        *,
-        margin,
-        radius,
-        font_size,
-        _fill_color_,
-        _selected_fill_,
-        _text_color_,
-        _selected_text_,
-    ):
-        self.margin = margin
-        self.radius = radius
-        self.font_size = font_size
-
-        self._fill_color_ = _fill_color_
-        self._selected_fill_ = _selected_fill_
-        self._text_color_ = _text_color_
-        self._selected_text_ = _selected_text_
-
-
 class Screen:
     def __init__(
         self,
         *,
+        min_visible,
         min_size,
-        palettes: Palettes,
-        default: Defaults,
-        layout_class: Constant,
-        outer: "Screen" = None,
+        border,
+        radius,
+        theme,
+        layout_class,
     ):
         self._id_ = uid()
-        self.default = default
+
         self.layout_class = layout_class
-        self.outer = outer
 
+        self.min_visible = min_visible
         self.min_size = min_size
-        self.palettes = palettes
+        self.border = border
+        self.radius = radius
 
-        self._pointables_ = []
-        self._pressables_ = []
-        self._altpressables_ = []
+        self.theme = theme
 
     def __repr__(self):
         return f"<{type(self).__name__} {self._id_}>"
-
-    def __getattr__(self, name):
-        if self.outer is not None:
-            try:
-                return getattr(self.outer, name)
-            except:
-                pass
-        raise AttributeError(f"unable to get attribute `.{name}`")
-
-    # platform tie-in functions
 
     def on_widget_nest_in(_, wid: "Widget"):
         raise NotImplementedError

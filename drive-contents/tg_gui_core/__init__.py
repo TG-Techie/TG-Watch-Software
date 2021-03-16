@@ -21,17 +21,27 @@
 # THE SOFTWARE.
 
 # base classes and application environment
-from ._shared import uid, clamp
 from .base import (
     Widget,
-    color,
-    align,
     singleinstance,
     NestingError,
     PlacementError,
     RenderError,
 )
+
 from .container import Container, self
+from .layout import Layout
+from .stateful import State, DerivedState
+from ._shared import uid, clamp
+
+from .theming import (
+    Theme,
+    SubStyle,
+    color,
+    align,
+    theme,
+)
+
 from .position_specifiers import (
     PositionSpecifier,
     ConstantPosition,
@@ -54,8 +64,6 @@ from .dimension_specifiers import (
     height,
     width,
 )
-from .layout import Layout
-from .stateful import State, DerivedState
 
 
 # classes and fucntions for making widget calsses 'lib tools'
@@ -63,6 +71,13 @@ from .__init__ import *
 from .base import Screen  # soon to be depricated
 from .container import declarable, layout_class
 from .root_widget import Root
+from .theming import (
+    SubTheme,
+    Palette,
+    SubPalette,
+    Style,
+    styled,
+)
 from .specifiers import (
     SpecifierReference,
     Specifier,

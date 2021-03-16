@@ -20,8 +20,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from tg_gui_core import *
+from tg_gui_core import Widget, Style, align
 from . import _imple as imple
+
+
+class LabelStyle(Style):
+    _style_attrs_ = ("text",)
 
 
 class Label(Widget):
@@ -29,8 +33,7 @@ class Label(Widget):
         self,
         *,
         text,
-        size=None,
-        palette=None,
+        _size=None,
         _alignment=align.center,
         **kwargs,
     ):

@@ -1,5 +1,4 @@
 from tg_gui_std.all import *
-from system.applocals import *
 
 import time
 import system
@@ -78,7 +77,7 @@ class shade(Pages):
         back = Button(
             text="<",
             press=self._superior_.pop_view(),
-            margin=default.margin * 2,
+            margin=12,
         )
 
         def _any_(self):

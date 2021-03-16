@@ -69,7 +69,7 @@ def declarable(cls):
 class Container(Widget):  # protocol
     _decalrable_ = False
 
-    # FUTURE: _theme_ = InheritedAttribute('_theme_', None)
+    _theme_ = InheritedAttribute("_theme_", None)
 
     def __init__(self):
         global Widget

@@ -7,3 +7,4 @@ from .hsplit import HSplit
 from .vsplit import VSplit
 from .zstack import ZStack
 from .hide import Hide
+from .view import View

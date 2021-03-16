@@ -3,7 +3,6 @@ from hardware.drivers import touchscreen, rtc
 from . import splash_screen
 
 from tg_gui_core import *
-from tg_gui_core.base import Defaults, Palette, Palettes
 
 splash_screen.update_progress(0.65)
 from tg_gui_std.all import *
@@ -12,38 +11,71 @@ from tg_gui_platform.root_wrapper import DisplayioRootWrapper, DisplayioScreen
 
 splash_screen.update_progress(0.70)
 
-screen = DisplayioScreen(
-    layout_class=layout_class.wearable,
-    display=display,
-    min_size=50,
-    default=Defaults(
-        margin=5,
-        radius=20,  # self.height // 2,
-        font_size=2,
-        _fill_color_=0x20609F,  # 0x20609f,
-        _selected_fill_=0x7FFFFF,
-        _text_color_=0xFFFFFF,
-        _selected_text_=0x000000,
+default_theme = Theme(
+    margin=6,
+    radius=240 // 8,
+    plain=Palette(
+        name="plain",
+        # layers
+        foregnd=0xD2D2D2,
+        pregnd=0xB0B0B0,
+        midgnd=0x9B9B9B,
+        postgnd=0x636363,
+        backgnd=0x000000,
+        # texts
+        foretext=0x303030,
+        pretext=0x606060,
+        midtext=0x909090,
+        posttext=0xC4C4C4,
+        text=0xFFFFFF,
+        # accents
+        accent=0x9B9B9B,
+        accenttext=0xFFFFFF,
+        active=0x636363,
+        activetext=0xD2D2D2,
     ),
-    palettes=Palettes(
-        primary=Palette(
-            fill_color=0x20609F,  # 0x20609f,
-            text_color=color.white,
-            selected_fill=0x7FFFFF,
-            selected_text=color.black,
-            backfill=color.gray,
-        ),
-        secondary=Palette(
-            fill_color=color.black,
-            text_color=color.lightgray,
-            selected_fill=color.gray,
-            selected_text=color.black,
-            backfill=color.red,
-        ),
+    action=SubPalette(
+        name="action",
+        accent=0x20609F,
+        active=0x7FFFFF,
+        accenttext=0xFFFFFF,
+        activetext=0x000000,
+        text=0x70F0F0,
+    ),
+    warning=SubPalette(
+        name="warning",
+        accent=0xFFC900,
+        active=0xD2D2D2,
+        accenttext=0x909090,
+        activetext=0xFFC900,
+        text=0xFFC900,
+    ),
+    alert=SubPalette(
+        name="alert",
+        accent=0xFF2922,
+        active=0xD2D2D2,
+        accenttext=0xFFFFFF,
+        activetext=0xC80000,
+        text=0xFF2922,
+    ),
+    indicator=SubPalette(
+        name="indicator",
+        accent=0x9B9B9B,
+        active=0x7EC636,
+        accenttext=0xFFFFFF,
+        activetext=0x000000,
     ),
 )
 
-default, palette = screen.default, screen.palettes
+screen = DisplayioScreen(
+    layout_class=layout_class.wearable,
+    display=display,
+    min_size=240 // 4,
+    min_visible=8,
+    border=4,
+    radius=240 // 8,
+    theme=default_theme,
+)
 
 
 def get_touch_coord():
