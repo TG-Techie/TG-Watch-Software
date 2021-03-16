@@ -3,6 +3,7 @@ from hardware.drivers import touchscreen, rtc
 from . import splash_screen
 
 from tg_gui_core import *
+from tg_gui_core.base import Defaults, Palette, Palettes
 
 splash_screen.update_progress(0.65)
 from tg_gui_std.all import *

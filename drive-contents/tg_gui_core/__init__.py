@@ -20,8 +20,52 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from .base import *
-from .layout import *
-from .root_widget import *
-from .stateful import *
-from .attribute_specifier import *
+# base classes and application environment
+from ._shared import uid, clamp
+from .base import (
+    Widget,
+    color,
+    align,
+    singleinstance,
+    NestingError,
+    PlacementError,
+    RenderError,
+)
+from .container import Container, self
+from .position_specifiers import (
+    PositionSpecifier,
+    ConstantPosition,
+    centerto,
+    leftof,
+    rightof,
+    below,
+    above,
+    center,
+    top,
+    bottom,
+    left,
+    right,
+)
+from .dimension_specifiers import (
+    DimensionSpecifier,
+    DimensionExpression,
+    DimensionExpressionConstructor,
+    ratio,
+    height,
+    width,
+)
+from .layout import Layout
+from .stateful import State, DerivedState
+
+
+# classes and fucntions for making widget calsses 'lib tools'
+from .__init__ import *
+from .base import Screen  # soon to be depricated
+from .container import declarable, layout_class
+from .root_widget import Root
+from .specifiers import (
+    SpecifierReference,
+    Specifier,
+    AttributeSpecifier,
+    ForwardMethodCall,
+)

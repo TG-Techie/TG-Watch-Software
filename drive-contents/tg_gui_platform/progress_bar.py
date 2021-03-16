@@ -82,4 +82,4 @@ class ProgressBar(Widget):
 
     def _update_progress(self, value):
         if self.isbuilt():
-            self._group.progress = clip(0.0, value, 1.0)
+            self._group.progress = clamp(0.0, value, 1.0)

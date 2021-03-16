@@ -22,9 +22,14 @@
 
 import gc
 
-from tg_gui_core.stateful import State
-from tg_gui_core.base import Container, Widget, declarable, center
-from tg_gui_core.attribute_specifier import AttributeSpecifier
+from tg_gui_core import (
+    State,
+    Widget,
+    Container,
+    declarable,
+    center,
+    AttributeSpecifier,
+)
 
 
 class PageState(State):
@@ -35,7 +40,7 @@ class PageState(State):
     def value(self, reader):
         value = self._value
         if isinstance(value, AttributeSpecifier):
-            page = self._value._get_attribute_(reader)
+            page = self._value._resolve_specified_(reader)
             value = self._value = reader._nested_.index(page)
         return value
 
@@ -61,7 +66,6 @@ class Pages(Container):
             _hot_rebuild_ = self._hot_rebuild_
         if _hot_rebuild_ is None:
             _hot_rebuild_ = False
-        print(self, _hot_rebuild_)
 
         # determin if is called, declared, or invalid
         was_declared = show is None and pages is None
@@ -70,8 +74,8 @@ class Pages(Container):
         if was_declared:
             # find the decalred pages
             show, pages = self._scan_class_for_pages()
-
         elif was_called:
+            self._decalrable_ = False
             assert isinstance(show, State), (
                 f"when calling {type(self).__name__} the 'show' argumetn must "
                 + "be a state or PageState object"

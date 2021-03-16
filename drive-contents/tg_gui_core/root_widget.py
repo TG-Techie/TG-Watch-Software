@@ -21,7 +21,8 @@
 # THE SOFTWARE.
 
 import gc
-from .base import *
+from ._shared import uid
+from .container import Container
 
 
 class Root(Container):
