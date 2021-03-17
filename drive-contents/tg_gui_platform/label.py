@@ -20,28 +20,30 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from tg_gui_core import Widget, Style, align
+from tg_gui_core import Widget, StyledWidget, Style, align, styled
 from . import _imple as imple
 
 
 class LabelStyle(Style):
-    _style_attrs_ = ("text",)
+    _style_attrs_ = ("text", "alignment")
 
 
-class Label(Widget):
+FIXME = lambda v: v
+
+
+@styled(label_style=LabelStyle)
+class Label(StyledWidget):
     def __init__(
         self,
-        *,
         text,
-        _size=None,
-        _alignment=align.center,
+        _size=FIXME(2),
+        _font=None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         self._text_state = text
-        self._alignment = _alignment
-        self._palette = palette
-        self._size = size
+        self._size = _size
+        self._font = _font
 
     def _pickup_(self):
         unlink_from_src(widget=self, src=self._text_state)
@@ -56,17 +58,20 @@ class Label(Widget):
         if self._size is None:
             self._size = screen.default.font_size
 
-        if self._palette is None:
-            self._palette = screen.palettes.primary
+        if self._style_ is None:
+            self._style_ = self._superior_._theme_.label_style
 
     def _build_(self):
         global imple
 
         super()._build_()
 
+        print(f"self._style_={self._style_}")
+        # (text_color,) = self._resolve_style_()
+        FUCK
         self._group = group = imple.Label(
             text="___",
-            color=self._palette.text_color,
+            color=text_color,
             coord=self._rel_coord_,
             dims=self._phys_size_,
             alignment=self._alignment,
@@ -101,3 +106,8 @@ class Label(Widget):
             text = padding.format(text)
 
         self._group.text = text
+
+
+from tg_gui_core import Theme
+
+print(Theme._styles_)

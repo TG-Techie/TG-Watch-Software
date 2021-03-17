@@ -65,6 +65,11 @@ default_theme = Theme(
         accenttext=0xFFFFFF,
         activetext=0x000000,
     ),
+    label_style=LabelStyle(
+        theme.plain,
+        text=palette.text,
+        alignment=align.center,
+    ),
 )
 
 screen = DisplayioScreen(
@@ -72,8 +77,9 @@ screen = DisplayioScreen(
     display=display,
     min_size=240 // 4,
     min_visible=8,
+    min_margin=5,
     border=4,
-    radius=240 // 8,
+    # radius=240 // 8,
     theme=default_theme,
 )
 

@@ -40,6 +40,7 @@ from .theming import (
     color,
     align,
     theme,
+    palette,
 )
 
 from .position_specifiers import (
@@ -72,6 +73,7 @@ from .base import Screen  # soon to be depricated
 from .container import declarable, layout_class
 from .root_widget import Root
 from .theming import (
+    StyledWidget,
     SubTheme,
     Palette,
     SubPalette,

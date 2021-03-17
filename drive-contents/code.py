@@ -92,22 +92,10 @@ else:
     )
     print(gc.mem_free())
 
-    gc.collect()
-    print(WatchRoot)
-    WatchRoot._superior_._std_startup_()
+gc.collect()
+WatchRoot._superior_._std_startup_()
+gc.collect()
 
-    g = WatchRoot._superior_._group
-    print(g, g[0])
-    gc.collect()
-
-# a = Rect(fill=color.red)
-# b = Rect(fill=color.blue)
-# a._id_ = "'red'"
-# b._id_ = "'blue'"
-#
-# WatchRoot.system_view.appview.app = a
-# WatchRoot.system_view.appview.app = b
-# print(WatchRoot.system_view.appview._nested_)
 if __name__ == "__main__":
 
     try:

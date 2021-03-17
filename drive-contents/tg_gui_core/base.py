@@ -77,7 +77,7 @@ class Screen:
         min_visible,
         min_size,
         border,
-        radius,
+        min_margin,
         theme,
         layout_class,
     ):
@@ -88,7 +88,7 @@ class Screen:
         self.min_visible = min_visible
         self.min_size = min_size
         self.border = border
-        self.radius = radius
+        self.min_margin = min_margin
 
         self.theme = theme
 
@@ -227,8 +227,7 @@ class Widget:  # protocol
         if current is None:
 
             self._superior_ = superior
-            self._screen_ = superior._screen_
-            self._screen_.on_widget_nest_in(self)
+            # self._screen_ = superior._screen_
         elif current is superior:  # if double nesting in same thing
             print(
                 f"WARNING: {self} already nested in {current}, "
@@ -239,6 +238,7 @@ class Widget:  # protocol
                 f"{self} already nested in {current}, " + f"cannot nest in {superior}"
             )
 
+        self._screen_.on_widget_nest_in(self)
         self._on_nest_()
 
     def _unnest_from_(self, superior=None):
@@ -269,14 +269,12 @@ class Widget:  # protocol
         if isinstance(height, DimensionSpecifier):
             height = height._calc_dim_(self)
 
-        margin_spec = self._margin_spec
-        if margin_spec is None:
-            margin_spec = self._screen_.default.margin
+        margin = self._margin_spec
+        if margin is None:
+            margin = self._screen_.min_margin
 
-        if isinstance(margin_spec, DimensionSpecifier):
-            margin = margin_spec._calc_dim_(self)
-        else:
-            margin = margin_spec
+        if isinstance(margin, DimensionSpecifier):
+            margin = margin._calc_dim_(self)
 
         self._margin_ = margin
         self._size_ = (width, height)

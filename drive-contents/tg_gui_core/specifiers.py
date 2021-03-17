@@ -26,10 +26,11 @@ class SpecifierReference:
         self,
         name,
         resolver=(lambda attr_spec, given_ref: given_ref),
-        check=lambda _: None,
+        constructs=None,
     ):
         self._name_ = name
         self._resolver = resolver
+        self._constructs_type = AttributeSpecifier if constructs is None else constructs
 
     def __repr__(self):
         return f"<{type(self).__name__} '{self._name_}'>"
@@ -38,7 +39,7 @@ class SpecifierReference:
         assert name.startswith("_") == name.endswith(
             "_"
         ), f"cannot specify private atrributes, found .{name}"
-        return AttributeSpecifier(self, (name,))
+        return self._constructs_type(self, (name,))
 
     def _resolve_reference_(self, attr_spec, ref):
         return self._resolver(attr_spec, ref)
@@ -64,7 +65,7 @@ class Specifier:  # protocol
 
 class AttributeSpecifier(Specifier):
     def _code_str_(self):
-        return f"{self._spec_ref._name_}.{'.'.join(self._attr_path)}"
+        return f"{self._spec_ref_._name_}.{'.'.join(self._attr_path)}"
 
     def __init__(self, spec_ref, attr_path):
         if isinstance(attr_path, str):
@@ -74,14 +75,14 @@ class AttributeSpecifier(Specifier):
             spec_ref, SpecifierReference
         ), f"found {attr_path}, expected SpecifierReference"
         self._attr_path = attr_path
-        self._spec_ref = spec_ref
+        self._spec_ref_ = spec_ref
 
     def __getattr__(self, name):
         assert name.startswith("_") == name.endswith(
             "_"
         ), f"cannot specify private atrributes, found .{name}"
-        return AttributeSpecifier(
-            self._spec_ref,
+        return type(self)(
+            self._spec_ref_,
             self._attr_path + (name,),
         )
 
@@ -89,7 +90,7 @@ class AttributeSpecifier(Specifier):
         return ForwardMethodCall(self, args, kwargs)
 
     def _resolve_specified_(self, ref):
-        attr = self._spec_ref._resolve_reference_(self, ref)
+        attr = self._spec_ref_._resolve_reference_(self, ref)
         for attrname in self._attr_path:
             attr = getattr(attr, attrname)
         return attr

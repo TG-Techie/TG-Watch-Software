@@ -26,13 +26,21 @@ from .container import Container
 
 
 class Root(Container):
+    @property
+    def _screen_(self):
+        return self._screen
+
+    @property
+    def _theme_(self):
+        return self._screen.theme
+
     def __init__(self, *, screen: Screen, size, **kwargs):
         assert len(size) == 2, f"expected two dimensions found, {size}"
 
         self._id_ = uid()
 
         # self._superior_ = None
-        self._screen_ = screen
+        self._screen = screen
 
         self._size_ = size
 

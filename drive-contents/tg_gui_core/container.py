@@ -77,6 +77,7 @@ class Container(Widget):  # protocol
         super().__init__(margin=0)
 
         self._nested_ = []
+        self._theme_ = None
 
     def _nest_(self, widget: Widget):
         if widget not in self._nested_:
