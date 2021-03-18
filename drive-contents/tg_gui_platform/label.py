@@ -20,12 +20,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from tg_gui_core import Widget, StyledWidget, Style, align, styled
+from tg_gui_core import Widget, StyledWidget, Style, State, align, styled, font
 from . import _imple as imple
 
 
 class LabelStyle(Style):
-    _style_attrs_ = ("text", "alignment")
+    _style_colors_ = ("text",)
+    _style_attrs_ = ("alignment", "font")
 
 
 FIXME = lambda v: v
@@ -36,14 +37,14 @@ class Label(StyledWidget):
     def __init__(
         self,
         text,
-        _size=FIXME(2),
+        _alignment=None,
         _font=None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         self._text_state = text
-        self._size = _size
         self._font = _font
+        self._alignment = _alignment
 
     def _pickup_(self):
         unlink_from_src(widget=self, src=self._text_state)
@@ -53,13 +54,14 @@ class Label(StyledWidget):
         """
         Resolve defaults for any inputs if no input was provided.
         """
-        screen = self._screen_
 
-        if self._size is None:
-            self._size = screen.default.font_size
+        print(self, self._style_)
 
-        if self._style_ is None:
-            self._style_ = self._superior_._theme_.label_style
+        if self._font is None:
+            self._font = self._style_.font
+
+        if self._alignment is None:
+            self._alignment = self._style_.alignment
 
     def _build_(self):
         global imple
@@ -68,14 +70,13 @@ class Label(StyledWidget):
 
         print(f"self._style_={self._style_}")
         # (text_color,) = self._resolve_style_()
-        FUCK
         self._group = group = imple.Label(
             text="___",
-            color=text_color,
+            color=0xFF0000,
             coord=self._rel_coord_,
             dims=self._phys_size_,
             alignment=self._alignment,
-            scale=self._size,
+            scale=FIXME(2),
         )
 
         # self._update_color()
@@ -85,6 +86,8 @@ class Label(StyledWidget):
             self._update_text(text_state.value(self))
         else:
             self._update_text(text_state)
+
+        self._update_color_(*self._style_._get_colors_(self))
 
     def _demolish_(self):
         if isinstance(self._text_state, State):
@@ -106,6 +109,11 @@ class Label(StyledWidget):
             text = padding.format(text)
 
         self._group.text = text
+
+    def _update_color_(self, text):
+        print("asdfasdf", text, type(text), repr(text))
+        print(f"asdf{self}._update_color_(text={text})")
+        self._group.color = text
 
 
 from tg_gui_core import Theme

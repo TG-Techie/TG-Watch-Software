@@ -51,8 +51,14 @@ if testing:
 
     @DisplayioRootWrapper(screen=screen, display=display, size=(240, 240))
     class WatchRoot(View):
+        charging_style = SubStyle(text=color.red)
 
-        body = Label(text="hello")
+        body = HSplit(
+            Label(
+                text="hello",
+                style=charging_style,
+            ),
+        )
 
 
 else:

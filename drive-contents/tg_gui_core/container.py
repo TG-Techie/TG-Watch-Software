@@ -39,6 +39,7 @@ layout_class = ConstantGroup(
 
 
 def _find_declared_superior(attr_spec, widget):
+    print(f"_find_declared_superior(attr_spec={attr_spec}, widget={widget})")
     assert isinstance(widget, Widget)
     container = widget if isinstance(widget, Container) else widget._superior_
     while not container._decalrable_:
@@ -46,6 +47,7 @@ def _find_declared_superior(attr_spec, widget):
         container = container._superior_
         if container is None:
             raise NestingError(f"{widget} not used in a declared container")
+    print(f"container={container}")
     return container
 
 
@@ -77,16 +79,25 @@ class Container(Widget):  # protocol
         super().__init__(margin=0)
 
         self._nested_ = []
+
+        # check for declared theme, if so set it
         self._theme_ = None
+        # cls = type(self)
+        # if self._decalrable_ and not isinstance(cls._theme_, InheritedAttribute):
+        #     self._theme_ = cls._theme_
+        # else:
+        #     self._theme_ = None
 
     def _nest_(self, widget: Widget):
         if widget not in self._nested_:
             self._nested_.append(widget)
             widget._nest_in_(self)
+            widget._on_nest_()
 
     def _unnest_(self, widget: Widget):
         if widget in self._nested_:
             widget._unnest_from_(self)
+            widget._on_unnest_()
         while widget in self._nested_:
             self._nested_.remove(widget)
 

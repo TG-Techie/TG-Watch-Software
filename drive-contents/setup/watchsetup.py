@@ -69,6 +69,7 @@ default_theme = Theme(
         theme.plain,
         text=palette.text,
         alignment=align.center,
+        font=font.body,
     ),
 )
 

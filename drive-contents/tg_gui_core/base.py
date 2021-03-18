@@ -239,7 +239,7 @@ class Widget:  # protocol
             )
 
         self._screen_.on_widget_nest_in(self)
-        self._on_nest_()
+        # self._on_nest_()
 
     def _unnest_from_(self, superior=None):
         """

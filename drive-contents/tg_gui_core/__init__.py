@@ -39,6 +39,7 @@ from .theming import (
     SubStyle,
     color,
     align,
+    font,
     theme,
     palette,
 )
@@ -74,7 +75,6 @@ from .container import declarable, layout_class
 from .root_widget import Root
 from .theming import (
     StyledWidget,
-    SubTheme,
     Palette,
     SubPalette,
     Style,
