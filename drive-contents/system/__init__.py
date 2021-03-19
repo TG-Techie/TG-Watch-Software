@@ -139,7 +139,7 @@ class power:
 class sensors:
     _id_ = uid()
 
-    speed = 0.5
+    speed = 1
 
     gyro = (State(0), State(0), State(0))
     accel = (State(0), State(0), State(0))

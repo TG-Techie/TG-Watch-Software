@@ -34,3 +34,11 @@ class Application(Layout):
         self.x_label(leftof(x_bar), label_size)
         y_bar = self.y((right, bottom), bar_size)
         self.y_label(leftof(y_bar), label_size)
+
+    def _show_(self):
+        senmsors.speed = 0.25
+        super()._show_()
+
+    def _hide_(self):
+        super()._hide_()
+        sensors.speed = 1
