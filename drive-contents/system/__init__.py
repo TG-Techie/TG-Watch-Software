@@ -135,6 +135,18 @@ class power:
             except RuntimeError as err:
                 print(f"{time.monotonic()}: battery read failed: `{err}`")
 
+    def _boot():
+        raw = drivers.bat_sensor.cell_percent
+        scaled = 100.0 * min(
+            max(0, raw - power._min_percent) / power._percent_range, 1.0
+        )
+        power.bat_percent.update(power, scaled)
+        print(power.bat_percent.value(power))
+        if power.bat_percent.value(power) > 20.0:
+            display.brightness.update(power, 0.8)
+        else:
+            display.brightness.update(power, 0.3)
+
 
 def _refresh():
     global clock
@@ -147,3 +159,4 @@ def _refresh():
 _refresh()
 clock._refresh_date()
 power._refresh()
+power._boot()
