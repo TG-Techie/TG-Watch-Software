@@ -1,4 +1,4 @@
-from tg_gui_platform.all import *
+from tg_gui_std.all import *
 from system.applocals import *
 
 

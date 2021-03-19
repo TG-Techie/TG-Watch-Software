@@ -38,6 +38,7 @@ class Slider(Widget):
 
         self._start_coord = None
         self._started_in_limits = None
+        self._initial_position = None
         self._selected = False
 
     # _selected_ = property(lambda self: self._selected)
