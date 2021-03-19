@@ -58,9 +58,9 @@ class ProgressBar(Widget):
             )
         else:
             self._group = group = imple.ProgressBar(
-                x=rx + radius,
+                x=rx,
                 y=ry + ph // 2 - 6,
-                width=pw - 2 * radius,
+                width=pw,
                 height=12,
                 progress=0.0,
                 stroke=1,
