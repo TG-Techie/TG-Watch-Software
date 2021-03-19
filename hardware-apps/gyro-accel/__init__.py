@@ -15,7 +15,7 @@ class Application(Layout):
     )
     accelerometer = Label(
         text=DerivedState(
-            sensors.accelerometer,
+            sensors.accel,
             lambda x, y, z: f"Accel\nX:{round(x,2):3}\nY:{round(y,2):3}\nZ:{round(z,2):3}",
         ),
         _alignment=align.trailing,

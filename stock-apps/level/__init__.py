@@ -6,13 +6,19 @@ import math
 
 @singleinstance
 class Application(Layout):
-    percent_x = DerivedState(
-        sensors.accelerometer,
-        lambda x, y, z: abs(x / math.sqrt(x ** 2 + y ** 2 + z ** 2)),
+
+    accel_mag = DerivedState(
+        sensors.accel, lambda x, y, z: math.sqrt(x ** 2 + y ** 2 + z ** 2)
     )
+
+    percent_x = DerivedState(
+        (sensors.accel[0], accel_mag),
+        lambda x, m: abs(x) / m if m != 0 else 0,
+    )
+
     percent_y = DerivedState(
-        sensors.accelerometer,
-        lambda x, y, z: abs(y / math.sqrt(x ** 2 + y ** 2 + z ** 2)),
+        (sensors.accel[1], accel_mag),
+        lambda y, m: abs(y) / m if m != 0 else 0,
     )
 
     x_label = Label(text="X:")

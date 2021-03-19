@@ -142,16 +142,15 @@ class sensors:
     speed = 0.5
 
     gyro = (State(0), State(0), State(0))
-    accelerometer = (State(0), State(0), State(-9.8))
+    accel = (State(0), State(0), State(0))
 
     _last = time.monotonic()
 
     def _refresh():
         now = time.monotonic()
-        if now - sensors._last > 1:
         if now - sensors._last > sensors.speed:
             y, x, z = drivers.accel.acceleration
-            for state, value in zip(sensors.accelerometer, (x, y, z)):
+            for state, value in zip(sensors.accel, (x, y, z)):
                 state.update(sensors, value)
             y, x, z = drivers.accel.gyro
             for state, value in zip(sensors.gyro, (x, y, z)):
