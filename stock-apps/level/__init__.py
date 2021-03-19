@@ -36,7 +36,7 @@ class Application(Layout):
         self.y_label(leftof(y_bar), label_size)
 
     def _show_(self):
-        senmsors.speed = 0.25
+        sensors.speed = 0.25
         super()._show_()
 
     def _hide_(self):
