@@ -128,7 +128,7 @@ class power:
                     max(0, raw - power._min_percent) / power._percent_range, 1.0
                 )
                 display._phys_limits = (0.1, 0.5) if scaled <= 20.0 else (0.2, 1.0)
-                display.brightness.update(power, display.brightness._value)
+                display._set_brightness(display.brightness.value(power))
                 power.bat_percent.update(power, scaled)
                 power.charging.update(power, drivers.vbus_detect.value)
                 power._last = now
