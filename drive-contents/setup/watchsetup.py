@@ -69,7 +69,17 @@ default_theme = Theme(
         theme.plain,
         text=palette.text,
         alignment=align.center,
-        font=font.body,
+        font=font.label,
+    ),
+    button_style=ButtonStyle(
+        theme.action,
+        fill=palette.accent,
+        text=palette.accenttext,
+        selected_fill=palette.active,
+        selected_text=palette.activetext,
+        font=font.label,
+        radius=240 // 8,  # theme.radius,
+        alignment=align.center,
     ),
 )
 

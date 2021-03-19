@@ -75,6 +75,7 @@ from .container import declarable, layout_class
 from .root_widget import Root
 from .theming import (
     StyledWidget,
+    StyledAttribute,
     Palette,
     SubPalette,
     Style,

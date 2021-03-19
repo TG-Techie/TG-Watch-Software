@@ -27,28 +27,47 @@ from tg_gui_core import (
     Specifier,
     align,
     DimensionSpecifier,
+    StyledWidget,
+    StyledAttribute,
+    Style,
+    State,
+    align,
+    styled,
+    font,
 )
 
 from . import _imple as imple
 
 
-class Button(Widget):
+class ButtonStyle(Style):
+    _style_colors_ = ("fill", "text", "selected_fill", "selected_text")
+    _style_attrs_ = ("font", "alignment", "radius")
+
+
+FIXME = lambda a: a
+
+
+@styled(button_style=ButtonStyle)
+class Button(StyledWidget):
     @StatefulAttribute(lambda self: False)
     def _selected_(self):
-        self._update_colors()
+        self._change_coloring_to(self._selected_)
+
+    _font = StyledAttribute("_font", "font")
+    _alignment = StyledAttribute("_alignment", "alignment")
+    _radius = StyledAttribute("_radius", "radius")
 
     def __repr__(self):
         return f"<{type(self).__name__} {self._id_} {repr(self._text)}>"
 
     def __init__(
         self,
-        *,
         text,
-        press,
-        size=None,
-        palette=None,
-        radius=None,
-        _alignment=align.center,
+        *,
+        action,
+        _font=None,
+        _alignment=None,
+        _radius=None,
         _y_adj=0,
         _x_adj=0,
         **kwargs,
@@ -56,21 +75,19 @@ class Button(Widget):
         self._text = text
         super().__init__(**kwargs)
 
-        self._radius_src = radius
         self._y_adj = _y_adj
         self._x_adj = _x_adj
 
+        self._font = _font
         self._alignment = _alignment
-        self._size_src = size
+        self._radius = _radius
 
-        self._press_spec = press
-        self._palette = palette
+        self._action_spec = action
 
         self._press_ = lambda: None
 
-    def _pickup_(self):
-        unlink_from_src(widget=self, src=self._text)
-        super()._pickup_()
+        self._colors = None
+        self._selected_colors = None
 
     def _select_(self):
         self._selected_ = True
@@ -79,34 +96,25 @@ class Button(Widget):
         self._selected_ = False
 
     def _on_nest_(self):
-        screen = self._screen_
-        palette = self._palette
-        if palette is None:
-            self._palette = screen.palettes.primary
 
-        font_size = self._size_src
-        if font_size is None:
-            font_size = self._screen_.default.font_size
-        self._font_size = font_size
-
-        press = self._press_spec
-        if isinstance(press, Specifier):
-            press = press._resolve_specified_(self)
-        self._press_ = press
+        action = self._action_spec
+        if isinstance(action, Specifier):
+            action = action._resolve_specified_(self)
+        self._press_ = action
 
     def _build_(self):
 
         super()._build_()
 
-        font_size = self._font_size
+        # font_size = self._font_size
+        #
+        # self._radius = radius = self._radius_src
+        # if radius is None:
+        #     self._radius = radius = self._screen_.default.radius
+        # if isinstance(radius, DimensionSpecifier):
+        #     self._radius = radius = radius._calc_dim_(self)
 
-        self._radius = radius = self._radius_src
-        if radius is None:
-            self._radius = radius = self._screen_.default.radius
-        if isinstance(radius, DimensionSpecifier):
-            self._radius = radius = radius._calc_dim_(self)
-
-        radius = min(radius, self.width // 2, self.height // 2)
+        radius = min(self._radius, self.width // 2, self.height // 2)
 
         self._group = group = imple.Group(max_size=2)
 
@@ -122,10 +130,11 @@ class Button(Widget):
             coord=(rel_x + self._x_adj, rel_y + self._y_adj),
             dims=self._phys_size_,
             alignment=self._alignment,
-            scale=font_size,
+            scale=FIXME(2),  # imple.font_to_scale(self._font)
         )
         self._set_text(self._text)
-        self._update_colors()
+        self._update_colors_(**self._style_._colors_(self))
+
         group.append(rect)
         group.append(label)
 
@@ -137,9 +146,15 @@ class Button(Widget):
         # print(self, repr(text))
         self._label.text = text
 
-    def _update_colors(self):
-        # print("updating color", self, self._rect, self._label)
-        selected = self._selected_
-        palette = self._palette
-        self._rect.fill = palette.selected_fill if selected else palette.fill_color
-        self._label.color = palette.selected_text if selected else palette.text_color
+    def _update_colors_(self, fill, text, selected_fill, selected_text):
+        self._colors = colors = (fill, text)
+        self._selected_colors = selected_colors = (selected_fill, selected_text)
+        self._change_coloring_to(self._selected_)
+
+    def _change_coloring_to(self, selected):
+        self._rect.fill, self._label.color = (
+            self._selected_colors if selected else self._colors
+        )
+        # selected = self._selected_
+        # self._rect.fill = selected_fill if selected else fill
+        # self._label.color = selected_text if selected else text

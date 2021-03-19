@@ -20,7 +20,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from tg_gui_core import Widget, StyledWidget, Style, State, align, styled, font
+from tg_gui_core import (
+    Widget,
+    StyledWidget,
+    StyledAttribute,
+    Style,
+    State,
+    align,
+    styled,
+    font,
+)
 from . import _imple as imple
 
 
@@ -34,6 +43,9 @@ FIXME = lambda v: v
 
 @styled(label_style=LabelStyle)
 class Label(StyledWidget):
+
+    _alignment = StyledAttribute("_alignment", "alignment")
+
     def __init__(
         self,
         text,
@@ -57,11 +69,11 @@ class Label(StyledWidget):
 
         print(self, self._style_)
 
-        if self._font is None:
-            self._font = self._style_.font
-
-        if self._alignment is None:
-            self._alignment = self._style_.alignment
+        # if self._font is None:
+        #     self._font = self._style_.font
+        #
+        # if self._alignment is None:
+        #     self._alignment = self._style_.alignment
 
     def _build_(self):
         global imple
@@ -87,7 +99,7 @@ class Label(StyledWidget):
         else:
             self._update_text(text_state)
 
-        self._update_color_(*self._style_._get_colors_(self))
+        self._update_color_(**self._style_._colors_(self))
 
     def _demolish_(self):
         if isinstance(self._text_state, State):
@@ -111,8 +123,6 @@ class Label(StyledWidget):
         self._group.text = text
 
     def _update_color_(self, text):
-        print("asdfasdf", text, type(text), repr(text))
-        print(f"asdf{self}._update_color_(text={text})")
         self._group.color = text
 
 

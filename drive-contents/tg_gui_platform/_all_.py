@@ -23,6 +23,6 @@
 from tg_gui_core import *
 from .rect import Rect
 from .label import Label, LabelStyle
-from .button import Button
+from .button import Button, ButtonStyle
 from .progress_bar import ProgressBar
 from .slider import Slider

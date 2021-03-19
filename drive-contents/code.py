@@ -53,12 +53,20 @@ if testing:
     class WatchRoot(View):
         charging_style = SubStyle(text=color.red)
 
-        body = HSplit(
+        body = VSplit(
             Label(
                 text="hello",
                 style=charging_style,
+                _alignment=align.center,
             ),
+            None,
+            Button("hellow", action=self.toggle_color),
         )
+
+        def toggle_color(self):
+            self.charging_style.text = (
+                color.red if self.charging_style.text != color.red else color.green
+            )
 
 
 else:
