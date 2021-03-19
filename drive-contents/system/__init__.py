@@ -136,10 +136,33 @@ class power:
                 print(f"{time.monotonic()}: battery read failed: `{err}`")
 
 
+class sensors:
+    _id_ = uid()
+
+    speed = 1
+
+    gyro = (State(0), State(0), State(0))
+    accel = (State(0), State(0), State(0))
+
+    _last = time.monotonic()
+
+    def _refresh():
+        now = time.monotonic()
+        if now - sensors._last > sensors.speed:
+            y, x, z = drivers.accel.acceleration
+            for state, value in zip(sensors.accel, (x, y, z)):
+                state.update(sensors, value)
+            y, x, z = drivers.accel.gyro
+            for state, value in zip(sensors.gyro, (x, y, z)):
+                state.update(sensors, value)
+            sensors._last = now
+
+
 def _refresh():
     global clock
     clock._refresh_time()
     power._refresh()
+    sensors._refresh()
     # if midnight just passed:
     # clock._refresh_date()
 

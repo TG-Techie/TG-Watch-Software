@@ -8,6 +8,7 @@ from digitalio import DigitalInOut
 from adafruit_ds3231 import DS3231
 from adafruit_focaltouch import Adafruit_FocalTouch
 from adafruit_lc709203f import LC709203F
+from adafruit_lsm6ds.lsm6dsox import LSM6DSOX
 from adafruit_drv2605 import DRV2605
 
 
@@ -33,6 +34,12 @@ def deinit():
     global bat_sensor
     try:
         bat_sensor.deinit()
+    except:
+        pass
+
+    global accel
+    try:
+        accel.deinit()
     except:
         pass
 
@@ -87,6 +94,8 @@ try:
     rtc = DS3231(ports.i2c)
 
     bat_sensor = LC709203F(ports.i2c)
+
+    accel = LSM6DSOX(ports.i2c)
 
     _enable_haptic()
     # haptic = DRV2605(ports.i2c, address=0x5E)
