@@ -139,6 +139,8 @@ class power:
 class sensors:
     _id_ = uid()
 
+    speed = 0.5
+
     gyro = (State(0), State(0), State(0))
     accelerometer = (State(0), State(0), State(-9.8))
 
@@ -147,6 +149,7 @@ class sensors:
     def _refresh():
         now = time.monotonic()
         if now - sensors._last > 1:
+        if now - sensors._last > sensors.speed:
             y, x, z = drivers.accel.acceleration
             for state, value in zip(sensors.accelerometer, (x, y, z)):
                 state.update(sensors, value)
