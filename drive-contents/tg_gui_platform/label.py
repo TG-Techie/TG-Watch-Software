@@ -35,7 +35,7 @@ from . import _imple as imple
 
 class LabelStyle(Style):
     _style_colors_ = ("text",)
-    _style_attrs_ = ("alignment", "font")
+    _style_elements_ = ("alignment", "font")
 
 
 FIXME = lambda v: v
@@ -124,8 +124,3 @@ class Label(StyledWidget):
 
     def _update_color_(self, text):
         self._group.color = text
-
-
-from tg_gui_core import Theme
-
-print(Theme._styles_)

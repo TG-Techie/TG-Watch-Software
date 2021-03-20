@@ -20,15 +20,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+# TODO: palettes only container color specs 
+
 from .base import Widget
 from ._shared import uid, ConstantGroup
 from .specifiers import SpecifierReference, Specifier, AttributeSpecifier, _specify
-from .container import _find_declared_superior
-from sys import version_info as _version_info
-
-# TODO: re-write to use descriptors for color and attributes
-#   where @styled formats the Style subclass
-
 
 align = ConstantGroup(
     "align",
@@ -47,72 +43,16 @@ font = ConstantGroup(
         "title",
         "heading",
         "subheading",
+        "label",
         "body",
         "footnote",
-        "label",
     ),
 )
 
 
-def _find_theme_if_widget(attr_spec, obj):
-    if isinstance(obj, Widget):
-        decld_cntr = _find_declared_superior(attr_spec, obj)
-        return decld_cntr._theme_
-    elif isinstance(obj, Theme):
-        return obj
-    else:
-        raise TypeError(
-            "`theme.<some attr>` cannot be refenced to objects of "
-            + f"type {type(obj)}, found {obj}"
-        )
+class color(int):
+    # in the future consider adding other init/etc
 
-
-class ThemeAttributeSpecifier(AttributeSpecifier):
-    __call__ = None
-    __getattr__ = None
-
-
-theme = SpecifierReference(
-    "theme",  # palettes are specified realtive to a theme thus
-    resolver=_find_theme_if_widget,
-    constructs=ThemeAttributeSpecifier,
-)
-
-
-def _verify_is_palette(attr_spec, obj):
-    assert isinstance(obj, Palette), (
-        f"`palette.<some attr>` cannot be refenced to objects of "
-        + f"type {type(obj)}, found {obj}"
-    )
-    return obj
-
-
-def _find_palette_if_widget(attr_spec, obj):
-    if isinstance(obj, Widget):
-        theme = _find_theme_if_widget(attr_spec, obj)
-    elif isinstance(obj, Palette):
-        return obj
-    else:
-        raise TypeError(
-            "`palette.<some attr>` cannot be refenced to objects of "
-            + f"type {type(obj)}, found {obj}"
-        )
-
-
-class ColorSpecifier(AttributeSpecifier):
-    __call__ = None
-    __getattr__ = None
-
-
-palette = SpecifierReference(
-    "palette",  # colors are specified relative to palettes
-    resolver=_find_palette_if_widget,
-    constructs=ColorSpecifier,
-)
-
-
-class color:
-    # TODO: consider make ready only using proerties and lambdas vs performance
     _clear = None  # tentative
     red = 0xFF0000
     orange = 0xFFA500
@@ -127,44 +67,102 @@ class color:
     darkgray = 0x606060
     black = 0x000000
 
-    def fromfloats(r, g, b):
+    @classmethod
+    def fromfloats(cls, r, g, b):
         r = round(255 * r ** 1.125)
         g = round(255 * g ** 1.125)
         b = round(255 * b ** 1.125)
-        return (r << 16) | (g << 8) | (b << 0)
+        return cls((r << 16) | (g << 8) | (b << 0))
+
+    @classmethod
+    def fromints(cls, r, g, b):
+        assert isinstance(r, int) and r < 256
+        assert isinstance(g, int) and g < 256
+        assert isinstance(b, int) and b < 256
+        return cls((r << 16) | (g << 8) | (b << 0))
 
 
-Color = int
+def _resolve_assert_is(attr_sepc, ref, types):
+    if isinstance(ref, types):
+        return ref
+    else:
+        raise TypeError(
+            f"{repr(attr_spec)} cannot be referenced from an object "
+            + f"of type {type(obj)}, found {obj}"
+        )
+
+
+class ThemeAttributeSpecifier(AttributeSpecifier):
+    pass
+
+
+class PaletteAttributeSpecifier(AttributeSpecifier):
+    pass
+
+    def __getattr__(self, _):
+        raise TypeError(
+            f"{type(self).__name__}s cannot be used to specify past one level, "
+            + f"attempted `{str(self)}.{name}`"
+        )
+
+
+theme = SpecifierReference(
+    "theme",  # palettes are specified realtive to a theme thus
+    resolver=lambda attr_spec, ref: _resolve_assert_is(attr_spec, ref, Theme),
+    constructs=ThemeAttributeSpecifier,
+)
+
+palette = SpecifierReference(
+    "palette",  # colors are specified relative to palettes
+    resolver=lambda attr_spec, ref: _resolve_assert_is(attr_spec, ref, Palette),
+    constructs=PaletteAttributeSpecifier,
+)
 
 
 class Palette:
+    _default_color_set = {
+        'foregnd',
+        'pregnd',
+        'midgnd',
+        'postgnd',
+        'backgnd',
+        'foretext',
+        'pretext',
+        'midtext',
+        'posttext',
+        'text',
+        'accent',
+        'accenttext',
+        'active',
+        'activetext',
+    }
+
     def __init__(
         self,
         *,
-        name,
-        # Color used form composing ui shapes
-        foregnd: Color,
-        pregnd: Color,
-        midgnd: Color,
-        postgnd: Color,
-        backgnd: Color,
+        # Colors used for composing ui shapes
+        foregnd: color,
+        pregnd: color,
+        midgnd: color,
+        postgnd: color,
+        backgnd: color,
         # text for contrasing each ground
-        foretext: Color,
-        pretext: Color,
-        midtext: Color,
-        posttext: Color,
-        text: Color,
+        foretext: color,
+        pretext: color,
+        midtext: color,
+        posttext: color,
+        text: color,
         # here are the attributes that are normally sub-styled
         # for the base Style object they should be the 'plain'
-        accent: Color,
-        accenttext: Color,
-        active: Color,
-        activetext: Color,
-        **kwargs,
+        accent: color,
+        accenttext: color,
+        active: color,
+        activetext: color,
+        # **kwargs, # diabled for now
     ):
+        FUCK(TODO=palettes only contiar color specifiers )
         self._id_ = uid()
-        self._name = name
-        self._registered = {}
+        self._name = None
         self._colors = dict(
             foregnd=foregnd,
             pregnd=pregnd,
@@ -183,29 +181,31 @@ class Palette:
             accenttext=accenttext,
             active=active,
             activetext=activetext,
-            **kwargs,
+            # **kwargs, # diabled for now
         )
 
     def __repr__(self):
-        return f"<{type(self).__name__}:{self._id_} {self._name}>"
-
-    def __getattr__(self, name, sub_pal=None):
-        assert isinstance(name, str)
-        if name in self._colors:
-            return self._colors[name]
+        if self.__name is not None:
+            return f"<{type(self).__name__} {self._id_}: {self._name}>"
         else:
-            if sub_pal is None:
-                raise AttributeError(f"'{self}' has no color '{name}'")
-            else:
-                raise AttributeError(f"'{sub_pal}' has no color '{name}'")
+            return f"<{type(self).__name__} {self._id_}>"
 
-    def _set_specified_(self, *_, **__):
-        raise NotImplementedError
+    def _theme_setup_(self, theme: "Theme", name):
+        assert isinstance(name, str)
+        self._name = name
+
+    def __getattr__(self, name):
+        maybe_color = self._colors.get(name, None)
+        if maybe_color is not None:
+            return maybe_color
+        else:
+            raise AttributeError(f"{self} has no attribute `.{name}`")
 
 
 class SubPalette(Palette):
     def __init__(
         self,
+        base_palette_spec,  # Union[Palette, AttributeSpecifier]
         *,
         # name,
         # requirted overides
@@ -213,473 +213,28 @@ class SubPalette(Palette):
         accenttext: Color,
         active: Color,
         activetext: Color,
-        _base_palette_=None,
         **kwargs,
     ):
+        assert isinstance(base_palette_spec, ThemeAttributeSpecifier)
+
         self._id_ = uid()
         self._name = None
-        self._registered = {}
-        self._base_palette_ = None
-        self._colors = dict(
+        self._base_palette_spec = base_palette_spec
+        self._color_specs = dict(
             accent=accent,
             accenttext=accenttext,
             active=active,
             activetext=activetext,
             **kwargs,
         )
+        self._colors = dict.fromkeys(Palette._default_color_set)
 
-    def _resolve_colors_(self, base_pal):
-        raise FUCK
-
-    def __getattr__(self, name):
-        assert (
-            self._base_palette_ is not None
-        ), f"{self} not given base palette, be sure to use it in a Theme"
-        # print(f"SubPalette:{self}._get_color_({reader}, {name})")
-        if name in self._colors:
-            return self._colors[name]
-        else:
-            return self._base_palette_.__getattr__(name, sub_pal=self)
-
-
-class Theme:
-    _styles_ = {}
-
-    @classmethod
-    def _add_style(cls, stylekey, styletype):
-        assert stylekey not in cls._styles_
-        assert isinstance(styletype, type)
-        assert issubclass(styletype, Style) and not issubclass(styletype, SubStyle)
-        cls._styles_[stylekey] = styletype
-
-    def __init__(
-        self,
-        *,
-        margin,
-        radius,
-        plain: Palette,
-        action: SubPalette,
-        warning: SubPalette,
-        alert: SubPalette,
-        indicator: SubPalette,
-        **kwargs,
-    ):
-        self._id_ = uid()
-        self.plain = plain
-
-        self.action = action
-        action._base_palette_ = plain
-        self.warning = warning
-        warning._base_palette_ = plain
-        self.alert = alert
-        alert._base_palette_ = plain
-        self.indicator = indicator
-        indicator._base_palette_ = plain
-
-        self.margin = margin
-        self.radius = radius
-
-        styles = self._styles_
-        # here we use a widget_styles dict because it can be pre-allocated
-        #    unlike setting attributes on self
-        self._widget_styles = widget_styles = dict.fromkeys(styles)
-        for stylename, stylecls in styles.items():
-            widget_style = kwargs.pop(stylename, None)
-            assert widget_style is not None, (
-                f"{type(self)} expecting keyword argument '{stylename}' of "
-                + f"type {stylecls}"
-            )
-            assert isinstance(widget_style, stylecls), (
-                f"expecting argument of type {stylecls} for keyword "
-                + f"argument '{stylename}', given {repr(widget_style)}"
-            )
-            widget_styles[stylename] = widget_style
-        else:
-            assert len(kwargs) == 0, (
-                "unexpected keyword arguments "
-                + f"{', '.join(repr(kw) for kw in kwargs)} passed to "
-                + f"{type(self)}"
-            )
-
-    def __repr__(self):
-        return f"<{type(self).__name__} {self._id_}>"
-
-    def __getattr__(self, name):
-        # attr = self._widget_styles.get(name, None)
-        if name in self._styles_:
-            return self._widget_styles.get(name, None)
-        else:
-            raise AttributeError(f"{self} has not attribute `.{name}`")
-
-
-class _color_descriptor:
-    def __init__(self, name):
+    def _theme_setup_(self, theme: "Theme", name):
         assert isinstance(name, str)
         self._name = name
 
-    def __repr__(self):
-        return f"<{type(self).__name__} '{self._color_descriptor}'>"
+        base_pal = _specify(self._base_palette_spec, theme)
 
-    def __get__(self, owner, ownertype):
-        return owner._get_color_(self._name)
-
-    def __set__(self, owner, value):
-        owner._set_color_(self._name, value)
-
-
-# libtool
-def styled(**kwarg):
-    assert len(kwarg) == 1, (
-        f"@styled(...) only takes one keyword argument, "
-        + f"found {','.join(repr(kw) for kw in kwarg)}"
-    )
-    (pair,) = kwarg.items()
-    stylename, stylecls = pair
-
-    assert isinstance(stylecls._style_colors_, tuple), (
-        f"{stylecls}'s ._style_colors_ not set in subclass, "
-        + f"subclesses of Style must set ._style_colors_ to a tuple of "
-        + "the required color names"
-    )
-
-    assert isinstance(stylecls._style_attrs_, tuple), (
-        f"{stylecls}'s ._style_attrs_ not set in subclass, "
-        + f"subclesses of Style must set ._style_attrs_ to a tuple of "
-        + "the required style attributes"
-    )
-
-    #  because circuitpython does not support the __setattr__ python feature
-    #   this needs to tbe patched into the SubStyle
-    # TODO: decide if style attrs can also be set
-
-    for color_name in stylecls._style_colors_:
-        if not hasattr(SubStyle, color_name):
-            setattr(SubStyle, color_name, _color_descriptor(color_name))
-
-    def _add_style_for(cls):
-        assert isinstance(cls, type) and issubclass(
-            cls, StyledWidget
-        ), f"found {cls}, expecting a subcalss of StyledWidget"
-
-        # now we add this specic base into the
-        Theme._add_style(stylename, stylecls)
-        cls._style_name_ = stylename
-        return cls
-
-    return _add_style_for
-
-
-#
-# class _SetableStyleAttr:
-#
-#     def __init__(self, attrname):
-#
-#
-
-
-class Style:
-    _style_colors_ = None  # tuple in subclasses
-    _style_attrs_ = None  # tuple in subclasses
-
-    # @classmethod
-    # def _fmt_subclass(cls):
-    #     assert cls is not Style
-    #     assert cls._style_colors_ is not None, f"subclasses of Style must define ._style_colors_ = (...)"
-    #     assert cls._style_attrs_ is not None, f"subclasses of Style must define ._style_attrs_ = (...)"
-    #
-    #
-
-    def __init__(self, pal_spec, **kwargs):
-        self._id_ = uid()
-        # make sure the class was inited correctly
-
-        # parse the arguments and check for completion and extras
-        self._pal_spec = pal_spec
-        self._color_specs = color_specs = {}
-        self._attrs = attrs = {}
-
-        # it is possible these are not necesarry in the future
-        self._colors = None
-        self._theme = None
-        self._palette = None
-
-        for color_name in self._style_colors_:
-            assert color_name in kwargs, f"{type(self)} missing kwarg '{color_name}'"
-            color_specs[color_name] = kwargs.pop(color_name)
-
-        for attr_name in self._style_attrs_:
-            assert attr_name in kwargs, f"{type(self)} missing kwarg '{attr_name}'"
-            attr = kwargs.pop(attr_name)
-            attrs[attr_name] = attr
-
-            assert not isinstance(attr, AttributeSpecifier), (
-                "for now, style attributes cannot be AttributeSpecifiers "
-                + f"{attr_name}={attr}, passed to {self} on init. use a number for now."
-            )
-
-        # make sure there are not any extra kwargs
-        assert len(kwargs) == 0, (
-            f"unexpected keyword argument{'s' if len(kwargs) > 1 else ''} "
-            + f"{', '.join(repr(kw) for kw in kwargs)} for {type(self)}"
-        )
-
-    def __repr__(self):
-        return f"<{type(self).__name__} {self._id_}>"
-
-    def _is_resolved(self):
-        return self._colors is not None
-
-    def _resolve_style_(self, ref):
-        if self._is_resolved():
-            assert (
-                self._find_theme(ref) is self._theme
-            ), f"styles cannot be double resolved"
-            return
-
-        self._theme = theme = self._find_theme(ref)
-        self._palette = palette = self._find_palette(self._pal_spec, theme, ref)
-
-        colors_specs = self._color_specs
-        self._colors = {
-            color_name: _specify(colors_specs[color_name], palette)
-            for color_name in self._style_colors_
-        }
-        # tuple(_specify(spec, palette) for spec in self._color_specs)
-
-    def _register_handler_(self, widget, handler):
-        pass
-
-    def _deregister_handler_(self, widget):
-        pass
-
-    def _get_color_(self, name):
-        assert self._is_resolved()
-
-        if name in self._colors:
-            return self._colors[name]
-        else:
-            raise AttributeError(f"{self} has no color .{name}")
-
-    def _set_color_(self, name, value):
-        raise TypeError(
-            f"cannot set colors on objects of type {type(self)}, tried {self}.{name} = {value}"
-        )
-
-    def _colors_(self, _):
-        return self._colors
-
-    def _get_attr_(self, name):
-        assert self._colors is not None, f"TODO: better error, {self} not resolved"
-
-        # if name in self._style_colors_:
-        #     return self._colors[self._style_colors_.index(name)]
-        if name in self._attrs:
-            return self._attrs[name]
-        else:
-            raise AttributeError(f"{self} has not attribute `.{name}`")
-
-    def _find_theme(pal_spec, ref):
-        return _find_declared_superior(None, ref)._theme_
-
-    def _find_palette(self, palette, theme, ref):
-
-        print(f"{self}._resolve_style_({ref}): theme={theme}")
-
-        if isinstance(palette, ThemeAttributeSpecifier):
-            palette = palette._resolve_specified_(theme)
-
-        assert isinstance(palette, Palette), f"found {palette}"
-
-        return palette
-
-    # def __get__(self, owner, ownertype):
-    #     return self
-
-    # def __getattr__(self, name):
-    #     if name.startswith("__"):
-    #         raise AttributeError()
-    #     return self._get_color_(name)
-
-
-class SubStyle(Style):
-    def __init__(self, pal_spec=None, **kwargs):
-        self._id_ = uid()
-        assert pal_spec is None or isinstance(
-            palette_spec, (Palette, ThemeAttributeSpecifier)
-        ), f"TODO: better error, found {pal_spec}"
-
-        for color_name, color_spec in kwargs.items():
-            assert isinstance(color_spec, (Color, ColorSpecifier)), (
-                f"{self} `color_name=...` must be a color or ColorSpecifier, "
-                + f"found {color_spec}"
-            )
-
-        self._pal_spec = pal_spec
-        self._color_specs = kwargs
-        self._base_style = None
-        self._color_names = None
-        self._colors = None
-
-        # it is possible these are not necesarry in the future
-        self._theme = None
-        self._palette = None
-
-        self._registered_handlers = {}
-
-    def _resolve_style_(self, ref):
-        if self._is_resolved():
-            assert (
-                self._find_theme(ref) is self._theme
-            ), f"styles cannot be double resolved"
-            return
-
-        assert isinstance(ref, StyledWidget), f"expecting a StledWidget, found {ref}"
-
-        self._theme = theme = self._find_theme(ref)
-        self._base_style = base_style = getattr(theme, ref._style_name_)
-
-        # make sure it is resolved...
-        base_style._resolve_style_(ref)
-
-        self._palette = palette = self._find_palette(
-            base_style._palette if self._pal_spec is None else self._pal_spec,
-            theme,
-            ref,
-        )
-
-        color_specs = self._color_specs
-        # resolves so it uses base style
-        self._colors = {}
-        for color_name in base_style._style_colors_:
-            if color_name in color_specs:
-                self._colors[color_name] = _specify(
-                    self._color_specs[color_name], palette
-                )
-            else:
-                pass
-
-        # self._color_names = base_style._style_colors_
-        # self._colors = tuple(
-        #     _specify(self._color_specs[color_name], palette)
-        #     if color_name in color_specs
-        #     else getattr(base_style, color_name)
-        #     for color_name in base_style._style_colors_
-        # )
-
-    def _register_handler_(self, widget, handler):
-        assert widget._id_ not in self._registered_handlers
-        self._registered_handlers[widget._id_] = handler
-
-    def _deregister_handler_(self, widget):
-        assert widget._id_ in self._registered_handlers
-        self._registered_handlers.pop(widget._id_)
-
-    def _alert_registered(self):
-        colors = self._colors_(None)
-        for registered in self._registered_handlers.values():
-            registered(**colors)
-
-    def _get_color_(self, name):
-        assert self._is_resolved()
-        if name in self._colors:
-            return self._colors[name]
-        else:
-            return self._base_style._get_color_(name)
-
-    def _get_attr_(self, name):
-        assert self._is_resolved()
-        # if name in self._colors:
-        #     return self._colors[self._color_names.index(name)]
-        # else:
-        return self._base_style_get_attr_(name)
-
-    def _set_color_(self, name, value):
-        if name in self._base_style._style_colors_:
-            self._colors[name] = value
-        else:
-            raise AttributeError(f"cannot assign {self}.{name}")
-        self._alert_registered()
-
-    def _colors_(self, _):
         colors = self._colors
-        base = self._base_style
-        return {
-            name: (colors[name] if name in colors else base._colorsp[name])
-            for name in base._style_colors_
-        }
-
-
-class StyledWidget(Widget):
-    _style_name_ = None
-
-    def __init__(self, style=None, **kwargs):
-        super().__init__(**kwargs)
-
-        assert style is None or isinstance(style, Style), f"TODO: error message"
-
-        self._given_style = style
-        self._style_ = None
-
-        # check subclass inited properly
-        assert self._style_name_ is not None, (
-            f"subclasses of StyleWidget must be decorated with @styled(...), "
-            + f"seems like {type(self)} was not"
-        )
-
-    def _nest_in_(self, superior):
-        super()._nest_in_(superior)
-
-        # resolve style
-        style = self._given_style
-        if style is None:
-            style = getattr(self._superior_._theme_, self._style_name_)
-
-        assert isinstance(style, Style), f"TODO: error message"
-
-        style._resolve_style_(self)
-        style._register_handler_(self, self._update_color_)
-        self._style_ = style
-
-    def _unnest_from_(self, superior=None):
-        super()._unnest_from_(superior)
-        self._style_._deregister_handler_(self)
-
-    def _update_color_(self, *_):
-        raise NotImplementedError(
-            "subclasses of StyledWidget must implement the "
-            + f"`._update_color_ method, {type(self)} does not"
-        )
-
-
-class StyledAttribute:
-    def __init__(self, attrname, style_attr_name):
-        self._attrname = attrname
-        self._priv_attrname = f"_styled_{attrname}_attr_"
-        self._style_attr_name = style_attr_name
-
-    def __repr__(self):
-        return (
-            f"<{type(self).__name__} .{_attrname} "
-            + f"<- <style>.{self._style_attr_name}>"
-        )
-
-    def __get__(self, owner, ownertype):
-        assert hasattr(owner, self._priv_attrname), (
-            f"``{owner}.{self._attrname}`` attribute not initialized, "
-            + f"styled `{type(owner).__name__}.{self._attrname}` attributes must be "
-            + f"initialized to `None` or some value"
-        )
-
-        privattr = getattr(owner, self._priv_attrname)
-        if privattr is None:  # resolve the attr form style
-            print(owner._style_._attrs)
-            styledattr = owner._style_._get_attr_(self._style_attr_name)
-            if isinstance(styledattr, Specifier):
-                styledattr = styledattr._resolve_specified_(owner)
-            setattr(owner, self._priv_attrname, styledattr)
-            return styledattr
-        else:
-            return privattr
-
-    def __set__(self, owner, value):
-        setattr(owner, self._priv_attrname, value)
+        for name in colors.keys():
+            if color

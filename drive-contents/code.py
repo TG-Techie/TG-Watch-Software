@@ -48,25 +48,41 @@ SWIPE_WIDTH = const(20)
 
 testing = const(1)
 if testing:
+    from system import clock
 
     @DisplayioRootWrapper(screen=screen, display=display, size=(240, 240))
     class WatchRoot(View):
-        charging_style = SubStyle(text=color.red)
-
+        text_color = State(color.red)
+        timestr = DerivedState((clock.hours, clock.mins), lambda h, m: f"{h:02}:{m:02}")
+        datestr = DerivedState(
+            (clock.weekdayname, clock.monthname, clock.monthday),
+            lambda w, m, d: (w[0:3] + " " + m[0:3] + f" {d:02}"),
+        )
+        btn_style = SubStyle(theme.warning, selected_text=0xFFA600)
         body = VSplit(
             Label(
-                text="hello",
-                style=charging_style,
+                "hello",
+                style=SubStyle(theme.warning),
                 _alignment=align.center,
             ),
-            None,
-            Button("hellow", action=self.toggle_color),
+            HSplit(Label(timestr), Label(datestr)),
+            HSplit(
+                Button(
+                    "hellow",
+                    action=self.toggle_color,
+                    style=btn_style,
+                ),
+                Button(
+                    "hi",
+                    action=lambda: None,
+                    style=btn_style,
+                ),
+            ),
         )
 
         def toggle_color(self):
-            self.charging_style.text = (
-                color.red if self.charging_style.text != color.red else color.green
-            )
+            # return
+            self.text_color = color.red if self.text_color != color.red else color.green
 
 
 else:
