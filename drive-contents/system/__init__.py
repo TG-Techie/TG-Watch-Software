@@ -115,7 +115,7 @@ class power:
     _min_percent = 0.0  # 20.0
     _max_percent = 95.0
 
-    _last = time.monotonic()
+    _last = -2
 
     _percent_range = _max_percent - _min_percent
 
@@ -136,12 +136,7 @@ class power:
                 print(f"{time.monotonic()}: battery read failed: `{err}`")
 
     def _boot():
-        raw = drivers.bat_sensor.cell_percent
-        scaled = 100.0 * min(
-            max(0, raw - power._min_percent) / power._percent_range, 1.0
-        )
-        power.bat_percent.update(power, scaled)
-        print(power.bat_percent.value(power))
+        print(f"bat_percent={power.bat_percent.value(power)}")
         if power.bat_percent.value(power) > 20.0:
             display.brightness.update(power, 0.8)
         else:
