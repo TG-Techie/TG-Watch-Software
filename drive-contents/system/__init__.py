@@ -4,6 +4,7 @@ from hardware import drivers
 from . import applocals
 import time
 import low_battery
+import microcontroller
 
 _to_month = (
     "INVALID MONTH",
@@ -143,6 +144,7 @@ class power:
 
         if bat_percent < 2.0:
             low_battery.loop()
+            microcontroller.reset()
 
         if bat_percent > 20.0:
             display.brightness.update(power, 0.8)
