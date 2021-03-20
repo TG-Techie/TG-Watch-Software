@@ -20,7 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from .base import Container, Widget, layout_class, declarable
+from .base import Widget
+from .container import Container, layout_class, declarable
 
 _layout_class_to_method_name = {
     layout_class.wearable: "_wearable_",

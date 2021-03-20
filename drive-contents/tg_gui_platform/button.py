@@ -20,7 +20,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from tg_gui_core import *
+
+from tg_gui_core.stateful import StatefulAttribute  # soon to be depricated
+from tg_gui_core import (
+    Widget,
+    Specifier,
+    align,
+    DimensionSpecifier,
+)
+
 from . import _imple as imple
 
 
@@ -30,7 +38,7 @@ class Button(Widget):
         self._update_colors()
 
     def __repr__(self):
-        return super().__repr__() + f"({self._text})"
+        return f"<{type(self).__name__} {self._id_} {repr(self._text)}>"
 
     def __init__(
         self,
@@ -45,13 +53,13 @@ class Button(Widget):
         _x_adj=0,
         **kwargs,
     ):
+        self._text = text
         super().__init__(**kwargs)
 
         self._radius_src = radius
         self._y_adj = _y_adj
         self._x_adj = _x_adj
 
-        self._text = text
         self._alignment = _alignment
         self._size_src = size
 
@@ -81,13 +89,10 @@ class Button(Widget):
             font_size = self._screen_.default.font_size
         self._font_size = font_size
 
-        press_spec = self._press_spec
-        if isinstance(press_spec, AttributeSpecifier):
-            self._press_ = press_spec._get_attribute_(self)
-        elif isinstance(press_spec, ForwardMethodCall):
-            self._press_ = press_spec._get_method_(self)
-        else:
-            self._press_ = press_spec
+        press = self._press_spec
+        if isinstance(press, Specifier):
+            press = press._resolve_specified_(self)
+        self._press_ = press
 
     def _build_(self):
 

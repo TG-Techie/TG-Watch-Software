@@ -38,6 +38,7 @@ class Slider(Widget):
 
         self._start_coord = None
         self._started_in_limits = None
+        self._initial_position = None
         self._selected = False
 
     # _selected_ = property(lambda self: self._selected)
@@ -123,7 +124,7 @@ class Slider(Widget):
         x_limits = xmin, xmax = (init_pos - knob_dim // 2, init_pos + 3 * knob_dim // 2)
         ymin, ymax = self._y_limits
         x, y = coord
-        self._init_x = init_x = clip(knob_dim // 2, x, self._span + knob_dim // 2)
+        self._init_x = init_x = clamp(knob_dim // 2, x, self._span + knob_dim // 2)
 
         self._selected = bool((ymin <= y <= ymax) and (xmin <= x <= xmax))
 
@@ -136,7 +137,7 @@ class Slider(Widget):
     def _update_coord_(self, coord):
         if self._selected:
             value = coord[0] - self._init_x + self._initial_position
-            value = clip(0, value, self._span)
+            value = clamp(0, value, self._span)
             self._update_position(value)
 
     def _update_position(self, new_pos):

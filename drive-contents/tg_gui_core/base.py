@@ -20,10 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-
-import random as _random
-
-from .constant_groups import *
+from ._shared import *
 from .position_specifiers import *
 from .dimension_specifiers import *
 
@@ -40,41 +37,46 @@ class RenderError(RuntimeError):
     pass
 
 
-_next_id = _random.randint(0, 11)
-
-
-def uid():
-    global _next_id
-    id = _next_id
-    _next_id += 1
-    return id
-
-
-def clip(lower, value, upper):
-    return min(max(lower, value), upper)
-
-
 def singleinstance(cls):
     return cls()
 
 
+class InheritedAttribute:
+    def __init__(self, attrname, initial):
+        self._attrname = attrname
+        self._priv_attrname = "_inherited_" + attrname + "_attr_"
+        self._initial = initial
+
+    def __repr__(self):
+        return f"<InheritedAttribute: .{self._attrname}>"
+
+    def __get__(self, owner, ownertype):
+        privname = self._priv_attrname
+        assert hasattr(owner, privname), (
+            f"``{owner}.{self._attrname}`` attribute not initialized, "
+            + f"inherited `{type(owner).__name__}.{self._attrname}` attributes must be "
+            + f"initialized to the inital `{self._initial}` or some other value"
+        )
+        privattr = getattr(owner, privname)
+        if privattr is not self._initial:  # normal get behavior
+            return privattr
+        else:  # get the inherited attribute
+            heirattr = getattr(owner._superior_, self._attrname)
+            if heirattr is not self._initial:
+                setattr(owner, privname, heirattr)
+            return heirattr
+
+    def __set__(self, owner, value):
+        setattr(owner, self._priv_attrname, value)
+
+
+# todo: move color and align to style/theming
 align = ConstantGroup(
     "align",
     (
         "leading",
         "center",
         "trailing",
-    ),
-)
-
-layout_class = ConstantGroup(
-    "size_class",
-    (
-        "wearable",
-        "portrait",
-        "landscape",
-        "desktop",
-        "custom",
     ),
 )
 
@@ -218,7 +220,10 @@ class Screen:
         raise NotImplementedError
 
 
-class Widget:
+class Widget:  # protocol
+
+    _screen_ = InheritedAttribute("_screen_", None)
+
     def __init__(self, *, margin=None):
         global Widget
         self._id_ = uid()
@@ -442,112 +447,3 @@ class Widget:
         self._coord_ = None
         self._rel_coord_ = None
         self._phys_coord_ = None
-
-
-def declarable(cls):
-    """
-    dcecorator to mark that a contianer is declarable (like layout or Pages).
-    this is used for attr_specs to finf the referenced self in `self.blah`
-    """
-    assert isinstance(cls, type), f"can only decorate classes"
-    assert issubclass(
-        cls, Container
-    ), f"{cls} does not subclass Container, it must to be @declarable"
-    cls._decalrable_ = True
-    return cls
-
-
-class Container(Widget):
-    _decalrable_ = False
-
-    def __init__(self):
-        global Widget
-
-        super().__init__(margin=0)
-
-        self._nested_ = []
-
-    @property
-    def fill(self):
-        return ((0, 0), self.dims)
-
-    def _nest_(self, widget: Widget):
-        if widget not in self._nested_:
-            self._nested_.append(widget)
-            widget._nest_in_(self)
-
-    def _unnest_(self, widget: Widget):
-        if widget in self._nested_:
-            widget._unnest_from_(self)
-        while widget in self._nested_:
-            self._nested_.remove(widget)
-
-    def _form_(self, dim_spec):
-        raise NotImplementedError(
-            f"{type(self).__name__}._form_(...) not implemented,"
-            + " see tg_gui_core/base.py for the template"
-        )
-        # Template:
-        # container subcless specific form code here
-        super(Container, self)._form_(dim_spec)
-
-    def _deform_(self):
-        for widget in self._nested_:
-            if widget.isformed():
-                widget._deform_()
-        super()._deform_()
-
-    def _place_(self, pos_spec):
-        raise NotImplementedError(
-            f"{type(self).__name__}._place_(...) not implemented,"
-            + " see tg_gui_core/base.py for the template"
-        )
-        # Template:
-        super(Container, self)._place_(pos_spec)
-        # container subcless specific place code here
-
-    def _pickup_(self):
-        for widget in self._nested_:
-            if widget.isplaced():
-                widget._pickup_()
-        super()._deform_()
-
-    def _build_(self):
-        raise NotImplementedError(
-            f"{type(self).__name__}._build_() not implemented,"
-            + " see tg_gui_core/base.py for the template"
-        )
-        # Template:
-        super(Container, self)._build_()
-        # container subcless specific build code here
-        self._screen_.on_container_build(self)
-
-    def _demolish_(self):
-        for widget in self._nested_:
-            if widget.isbuilt():
-                widget._demolish_()
-        super()._demolish_()
-        self._screen_.on_container_demolish(self)
-
-    def _show_(self):
-        raise NotImplementedError(
-            f"{type(self).__name__}._show_() not implemented,"
-            + " see tg_gui_core/base.py for the template"
-        )
-        # Tempalte:
-        super(Container, self)._show_()
-        # container subcless specific show code here
-        self._screen_.on_container_show(self)
-
-    def _hide_(self):
-        for widget in self._nested_:
-            if widget.isshowing():
-                widget._hide_()
-        super()._hide_()
-        self._screen_.on_container_hide(self)
-
-    def __del__(self):
-        nested = self._nested_
-        while len(nested):
-            del nested[0]
-        super().__del__()

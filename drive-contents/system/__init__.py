@@ -1,4 +1,4 @@
-from tg_gui_core.stateful import State, DerivedState, uid
+from tg_gui_core import State, DerivedState, uid
 import hardware
 from hardware import drivers
 from . import applocals

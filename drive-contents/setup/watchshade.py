@@ -53,6 +53,7 @@ class shade(Pages):
             press=lambda: None,
         )
 
+        print(f"Layout._decalrable_={Layout._decalrable_}")
         open_torch = Button(
             text="torch",
             radius=ratio(height // 2),

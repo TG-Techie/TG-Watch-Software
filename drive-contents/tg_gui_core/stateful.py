@@ -20,8 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from .base import *
-from .attribute_specifier import AttributeSpecifier
+from ._shared import uid
 
 
 def _not(obj):
@@ -90,11 +89,8 @@ class State:
             if key is not excluded_key:
                 handler(value)
 
-    # trial sytaxes
-    def derive(self, transform):
+    def __rshift__(self, transform):
         return DerivedState(self, transform)
-
-    __rshift__ = __call__ = into = derive
 
     @classmethod
     def __bool__(cls):
@@ -160,6 +156,8 @@ class StatefulAttribute:
         self._initfn = initfn
         self._privname = private_name
         self._updatefn = _updatefn
+
+        print(f"WARNING: `StatefulAttribute` will soon be depricated")
 
     def __call__(self, fn):
         if self._updatefn is None:

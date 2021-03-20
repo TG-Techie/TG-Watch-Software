@@ -110,7 +110,7 @@ class SimpleRoundRect(displayio.TileGrid):
         self._palette = palette
         self._shape = shape
 
-        # clip a too large radius to the max allowed
+        # clamp a too large radius to the max allowed
         radius = min(radius, round(width / 2), round(height / 2))
 
         # calculate and apply the radius row by row
