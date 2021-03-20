@@ -3,6 +3,7 @@ import hardware
 from hardware import drivers
 from . import applocals
 import time
+import low_battery
 
 _to_month = (
     "INVALID MONTH",
@@ -136,9 +137,16 @@ class power:
                 print(f"{time.monotonic()}: battery read failed: `{err}`")
 
     def _boot():
-        print(f"bat_percent={power.bat_percent.value(power)}")
-        if power.bat_percent.value(power) > 20.0:
+        bat_percent = power.bat_percent.value(power)
+
+        print(f"bat_percent={bat_percent}")
+
+        if bat_percent < 2.0:
+            low_battery.loop()
+
+        if bat_percent > 20.0:
             display.brightness.update(power, 0.8)
+
         else:
             display.brightness.update(power, 0.3)
 
