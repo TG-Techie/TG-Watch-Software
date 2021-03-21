@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-# TODO: palettes only container color specs 
+# TODO: make SubTheme
 
 from .base import Widget
 from ._shared import uid, ConstantGroup
@@ -121,20 +121,20 @@ palette = SpecifierReference(
 
 class Palette:
     _default_color_set = {
-        'foregnd',
-        'pregnd',
-        'midgnd',
-        'postgnd',
-        'backgnd',
-        'foretext',
-        'pretext',
-        'midtext',
-        'posttext',
-        'text',
-        'accent',
-        'accenttext',
-        'active',
-        'activetext',
+        "foregnd",
+        "pregnd",
+        "midgnd",
+        "postgnd",
+        "backgnd",
+        "foretext",
+        "pretext",
+        "midtext",
+        "posttext",
+        "text",
+        "accent",
+        "accenttext",
+        "active",
+        "activetext",
     }
 
     def __init__(
@@ -160,10 +160,9 @@ class Palette:
         activetext: color,
         # **kwargs, # diabled for now
     ):
-        FUCK(TODO=palettes only contiar color specifiers )
         self._id_ = uid()
         self._name = None
-        self._colors = dict(
+        self._color_specs = dict(
             foregnd=foregnd,
             pregnd=pregnd,
             midgnd=midgnd,
@@ -190,7 +189,7 @@ class Palette:
         else:
             return f"<{type(self).__name__} {self._id_}>"
 
-    def _theme_setup_(self, theme: "Theme", name):
+    def _setup_(self, theme: "Theme", name):
         assert isinstance(name, str)
         self._name = name
 
@@ -220,21 +219,108 @@ class SubPalette(Palette):
         self._id_ = uid()
         self._name = None
         self._base_palette_spec = base_palette_spec
-        self._color_specs = dict(
-            accent=accent,
-            accenttext=accenttext,
-            active=active,
-            activetext=activetext,
-            **kwargs,
-        )
-        self._colors = dict.fromkeys(Palette._default_color_set)
+        self._color_specs = specs = dict.fromkeys(Palette._default_color_set)
 
-    def _theme_setup_(self, theme: "Theme", name):
+        specs.update(
+            dict(
+                accent=accent,
+                accenttext=accenttext,
+                active=active,
+                activetext=activetext,
+            )
+        )
+
+        specs.update(kwargs)
+
+    def _setup_(self, theme: "Theme", name):
         assert isinstance(name, str)
+        assert isinstance(theme, Theme)
         self._name = name
 
         base_pal = _specify(self._base_palette_spec, theme)
 
-        colors = self._colors
-        for name in colors.keys():
-            if color
+        specs = self._color_specs
+        base_specs = base_pal._color_specs
+        for name, value in specs.items():
+            if value is None:
+                specs[name] = base_specs[name]
+
+
+class Theme:
+    _styles_ = {}
+
+    _default_attr_set = {
+        "plain",
+        "action",
+        "warning",
+        "alert",
+        "indicator",
+        "margin",
+        "radius",
+    }
+
+    @classmethod
+    def _add_style(cls, stylekey, styletype):
+        assert stylekey not in cls._styles_
+        assert isinstance(styletype, type)
+        assert issubclass(styletype, Style) and not issubclass(styletype, SubStyle)
+        cls._styles_[stylekey] = styletype
+
+    def __init__(
+        self,
+        *,
+        margin,
+        radius,
+        plain: Palette,
+        action: SubPalette,
+        warning: SubPalette,
+        alert: SubPalette,
+        indicator: SubPalette,
+        **kwargs,
+    ):
+        self._id_ = uid()
+
+        self._palettes = dict(
+            plain=plain,
+            action=action,
+            warning=warning,
+            alert=alert,
+            indicator=indicator,
+        )
+
+        self._attrs = dict(
+            margin=margin,
+            radius=radius,
+        )
+
+        # here we use a widget_styles dict because it can be pre-allocated
+        #    unlike setting attributes on self
+        style_names = self._styles_
+        self._widget_styles = widget_styles = dict.fromkeys(style_names)
+        for stylename, stylecls in style_names.items():
+            widget_style = kwargs.pop(stylename, None)
+            assert widget_style is not None, (
+                f"{type(self)} expecting keyword argument '{stylename}' of "
+                + f"type {stylecls}"
+            )
+            assert isinstance(widget_style, stylecls), (
+                f"expecting argument of type {stylecls} for keyword "
+                + f"argument '{stylename}', given {repr(widget_style)}"
+            )
+            widget_styles[stylename] = widget_style
+        else:
+            assert len(kwargs) == 0, (
+                "unexpected keyword arguments "
+                + f"{', '.join(repr(kw) for kw in kwargs)} passed to "
+                + f"{type(self)}"
+            )
+
+    def __repr__(self):
+        return f"<{type(self).__name__} {self._id_}>"
+
+    def __getattr__(self, name):
+        # attr = self._widget_styles.get(name, None)
+        if name in self._styles_:
+            return self._widget_styles.get(name, None)
+        else:
+            raise AttributeError(f"{self} has not attribute `.{name}`")

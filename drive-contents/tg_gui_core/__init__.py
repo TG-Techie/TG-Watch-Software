@@ -36,7 +36,74 @@ from ._shared import uid, clamp
 
 from .theming import (
     Theme,
-    SubStyle,
+class Theme:
+    _styles_ = {}
+
+    @classmethod
+    def _add_style(cls, stylekey, styletype):
+        assert stylekey not in cls._styles_
+        assert isinstance(styletype, type)
+        assert issubclass(styletype, Style) and not issubclass(styletype, SubStyle)
+        cls._styles_[stylekey] = styletype
+
+    def __init__(
+        self,
+        *,
+        margin,
+        radius,
+        plain: Palette,
+        action: SubPalette,
+        warning: SubPalette,
+        alert: SubPalette,
+        indicator: SubPalette,
+        **kwargs,
+    ):
+        self._id_ = uid()
+        self.plain = plain
+
+        self.action = action
+        action._base_palette_ = plain
+        self.warning = warning
+        warning._base_palette_ = plain
+        self.alert = alert
+        alert._base_palette_ = plain
+        self.indicator = indicator
+        indicator._base_palette_ = plain
+
+        self.margin = margin
+        self.radius = radius
+
+        styles = self._styles_
+        # here we use a widget_styles dict because it can be pre-allocated
+        #    unlike setting attributes on self
+        self._widget_styles = widget_styles = dict.fromkeys(styles)
+        for stylename, stylecls in styles.items():
+            widget_style = kwargs.pop(stylename, None)
+            assert widget_style is not None, (
+                f"{type(self)} expecting keyword argument '{stylename}' of "
+                + f"type {stylecls}"
+            )
+            assert isinstance(widget_style, stylecls), (
+                f"expecting argument of type {stylecls} for keyword "
+                + f"argument '{stylename}', given {repr(widget_style)}"
+            )
+            widget_styles[stylename] = widget_style
+        else:
+            assert len(kwargs) == 0, (
+                "unexpected keyword arguments "
+                + f"{', '.join(repr(kw) for kw in kwargs)} passed to "
+                + f"{type(self)}"
+            )
+
+    def __repr__(self):
+        return f"<{type(self).__name__} {self._id_}>"
+
+    def __getattr__(self, name):
+        # attr = self._widget_styles.get(name, None)
+        if name in self._styles_:
+            return self._widget_styles.get(name, None)
+        else:
+            raise AttributeError(f"{self} has not attribute `.{name}`")
     color,
     align,
     font,
@@ -58,6 +125,7 @@ from .position_specifiers import (
     left,
     right,
 )
+
 from .dimension_specifiers import (
     DimensionSpecifier,
     DimensionExpression,
@@ -73,6 +141,7 @@ from .__init__ import *
 from .base import Screen  # soon to be depricated
 from .container import declarable, layout_class
 from .root_widget import Root
+
 from .theming import (
     StyledWidget,
     StyledAttribute,
@@ -81,6 +150,7 @@ from .theming import (
     Style,
     styled,
 )
+
 from .specifiers import (
     SpecifierReference,
     Specifier,

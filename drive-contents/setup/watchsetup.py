@@ -78,7 +78,7 @@ default_theme = Theme(
         selected_fill=palette.active,
         selected_text=palette.activetext,
         font=font.label,
-        radius=240 // 8,  # theme.radius,
+        radius=theme.radius,
         alignment=align.center,
     ),
 )
