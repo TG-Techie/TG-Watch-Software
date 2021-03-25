@@ -88,6 +88,10 @@ class Container(Widget):  # protocol
         # else:
         #     self._theme_ = None
 
+    def _on_nest_(self):
+        if not self._theme_.issetup():
+            self._theme_._setup_(self)
+
     def _nest_(self, widget: Widget):
         if widget not in self._nested_:
             self._nested_.append(widget)
@@ -107,7 +111,7 @@ class Container(Widget):  # protocol
             + " see tg_gui_core/base.py for the template"
         )
         # Template:
-        # container subcless specific form code here
+        # container subclass specific form code here
         super(Container, self)._form_(dim_spec)
 
     def _deform_(self):
@@ -123,7 +127,7 @@ class Container(Widget):  # protocol
         )
         # Template:
         super(Container, self)._place_(pos_spec)
-        # container subcless specific place code here
+        # container subclass specific place code here
 
     def _pickup_(self):
         for widget in self._nested_:
@@ -138,7 +142,7 @@ class Container(Widget):  # protocol
         )
         # Template:
         super(Container, self)._build_()
-        # container subcless specific build code here
+        # container subclass specific build code here
         self._screen_.on_container_build(self)
 
     def _demolish_(self):
@@ -153,9 +157,9 @@ class Container(Widget):  # protocol
             f"{type(self).__name__}._show_() not implemented,"
             + " see tg_gui_core/base.py for the template"
         )
-        # Tempalte:
+        # Template:
         super(Container, self)._show_()
-        # container subcless specific show code here
+        # container subclass specific show code here
         self._screen_.on_container_show(self)
 
     def _hide_(self):

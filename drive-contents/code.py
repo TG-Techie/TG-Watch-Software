@@ -58,11 +58,12 @@ if testing:
             (clock.weekdayname, clock.monthname, clock.monthday),
             lambda w, m, d: (w[0:3] + " " + m[0:3] + f" {d:02}"),
         )
-        btn_style = SubStyle(theme.warning, selected_text=0xFFA600)
+        btn_style = ButtonStyle.substyle(theme.warning, selected_text=0xFFA600)
+
         body = VSplit(
             Label(
                 "hello",
-                style=SubStyle(theme.warning),
+                style=LabelStyle.substyle(theme.warning),
                 _alignment=align.center,
             ),
             HSplit(Label(timestr), Label(datestr)),

@@ -63,6 +63,7 @@ class InheritedAttribute:
         else:  # get the inherited attribute
             heirattr = getattr(owner._superior_, self._attrname)
             if heirattr is not self._initial:
+                # init the inherited attr
                 setattr(owner, privname, heirattr)
             return heirattr
 

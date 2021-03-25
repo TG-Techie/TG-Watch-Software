@@ -41,7 +41,7 @@ from . import _imple as imple
 
 class ButtonStyle(Style):
     _style_colors_ = ("fill", "text", "selected_fill", "selected_text")
-    _style_attrs_ = ("font", "alignment", "radius")
+    _style_elements_ = ("font", "alignment", "radius")
 
 
 FIXME = lambda a: a

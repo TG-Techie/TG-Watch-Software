@@ -14,8 +14,8 @@ splash_screen.update_progress(0.70)
 default_theme = Theme(
     margin=6,
     radius=240 // 8,
+    border=3,
     plain=Palette(
-        name="plain",
         # layers
         foregnd=0xD2D2D2,
         pregnd=0xB0B0B0,
@@ -35,7 +35,7 @@ default_theme = Theme(
         activetext=0xD2D2D2,
     ),
     action=SubPalette(
-        name="action",
+        theme.plain,
         accent=0x20609F,
         active=0x7FFFFF,
         accenttext=0xFFFFFF,
@@ -43,7 +43,7 @@ default_theme = Theme(
         text=0x70F0F0,
     ),
     warning=SubPalette(
-        name="warning",
+        theme.plain,
         accent=0xFFC900,
         active=0xD2D2D2,
         accenttext=0x909090,
@@ -51,20 +51,19 @@ default_theme = Theme(
         text=0xFFC900,
     ),
     alert=SubPalette(
-        name="alert",
+        theme.plain,
         accent=0xFF2922,
         active=0xD2D2D2,
         accenttext=0xFFFFFF,
         activetext=0xC80000,
         text=0xFF2922,
     ),
-    indicator=SubPalette(
-        name="indicator",
-        accent=0x9B9B9B,
-        active=0x7EC636,
-        accenttext=0xFFFFFF,
-        activetext=0x000000,
-    ),
+    # indicator=SubPalette(
+    #     accent=0x9B9B9B,
+    #     active=0x7EC636,
+    #     accenttext=0xFFFFFF,
+    #     activetext=0x000000,
+    # ),
     label_style=LabelStyle(
         theme.plain,
         text=palette.text,

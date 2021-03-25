@@ -206,12 +206,11 @@ class SubPalette(Palette):
         self,
         base_palette_spec,  # Union[Palette, AttributeSpecifier]
         *,
-        # name,
         # requirted overides
-        accent: Color,
-        accenttext: Color,
-        active: Color,
-        activetext: Color,
+        accent: color,
+        accenttext: color,
+        active: color,
+        activetext: color,
         **kwargs,
     ):
         assert isinstance(base_palette_spec, ThemeAttributeSpecifier)
@@ -249,21 +248,11 @@ class SubPalette(Palette):
 class Theme:
     _styles_ = {}
 
-    _default_attr_set = {
-        "plain",
-        "action",
-        "warning",
-        "alert",
-        "indicator",
-        "margin",
-        "radius",
-    }
-
     @classmethod
-    def _add_style(cls, stylekey, styletype):
+    def _add_stylecls(cls, stylekey, styletype):
         assert stylekey not in cls._styles_
         assert isinstance(styletype, type)
-        assert issubclass(styletype, Style) and not issubclass(styletype, SubStyle)
+        assert issubclass(styletype, Style)
         cls._styles_[stylekey] = styletype
 
     def __init__(
@@ -271,11 +260,11 @@ class Theme:
         *,
         margin,
         radius,
+        border,
         plain: Palette,
         action: SubPalette,
         warning: SubPalette,
         alert: SubPalette,
-        indicator: SubPalette,
         **kwargs,
     ):
         self._id_ = uid()
@@ -285,20 +274,21 @@ class Theme:
             action=action,
             warning=warning,
             alert=alert,
-            indicator=indicator,
         )
 
         self._attrs = dict(
             margin=margin,
             radius=radius,
+            border=border,
         )
 
         # here we use a widget_styles dict because it can be pre-allocated
         #    unlike setting attributes on self
-        style_names = self._styles_
-        self._widget_styles = widget_styles = dict.fromkeys(style_names)
-        for stylename, stylecls in style_names.items():
-            widget_style = kwargs.pop(stylename, None)
+        self._widget_styles = widget_styles = dict.fromkeys(self._styles_)
+        for stylename, stylecls in self._styles_.items():
+            widget_styles[stylename] = widget_style = kwargs.pop(stylename, None)
+
+            # check after (for clarity)
             assert widget_style is not None, (
                 f"{type(self)} expecting keyword argument '{stylename}' of "
                 + f"type {stylecls}"
@@ -307,13 +297,21 @@ class Theme:
                 f"expecting argument of type {stylecls} for keyword "
                 + f"argument '{stylename}', given {repr(widget_style)}"
             )
-            widget_styles[stylename] = widget_style
+
         else:
+            # make sure there are no extra kwargs
             assert len(kwargs) == 0, (
                 "unexpected keyword arguments "
                 + f"{', '.join(repr(kw) for kw in kwargs)} passed to "
                 + f"{type(self)}"
             )
+
+    def _setup_(self, widget):
+        # init the palettes, be sure to setup plain first
+        self.plain._setup_(self, "plain")
+        self.action._setup_(self, "action")
+        self.warning._setup_(self, "warning")
+        self.alert._setup_(self, "alert")
 
     def __repr__(self):
         return f"<{type(self).__name__} {self._id_}>"
@@ -324,3 +322,134 @@ class Theme:
             return self._widget_styles.get(name, None)
         else:
             raise AttributeError(f"{self} has not attribute `.{name}`")
+
+
+class SubTheme(Theme):
+    def __init__(self):
+        FUCK
+
+
+def styled(**kwarg):
+    """
+    associates a Style subclass with a StyledWidget and adds it as a
+    named default for the Theme class
+    """
+
+    assert len(kwarg) == 1, (
+        "@styled(...) takes only one argument, "
+        + f"found {', '.join(repr(kw) for kw in kwarg.keys())}"
+    )
+
+    # get the name and style class (now that we know it is 1 arg long)
+    (stylename,) = kwarg.keys()
+    (stylecls,) = kwarg.values()
+
+    return lambda widgetcls: _add_styleclass_to_styledwidgetclass(
+        stylename,
+        stylecls,
+        widgetcls,
+    )
+
+
+def _add_styleclass_to_styledwidgetclass(name, stylecls, widgetcls):
+    assert isinstance(name, str)
+    assert isinstance(stylecls, type) and issubclass(stylecls, Style)
+    assert isinstance(widgetcls, type) and issubclass(widgetcls, StyledWidget)
+
+    stylecls._init_style_subclass()
+    Theme._add_stylecls(name, stylecls)
+    widgetcls._theme_style_name_ = name
+    widgetcls._style_type_ = widgetcls
+    return widgetcls  # part of a decorator
+
+
+class Style:
+    _style_colors_ = None  # can be colors, specs, or states
+    _style_elements_ = None  # radius, font, etc
+
+    @classmethod
+    def substyle(cls, palette_spec=None, **kwargs):
+        return None
+
+    def __init__(self, palette_spec, **kwargs):
+
+        assert isinstance(palette_spec, (Palette, ThemeAttributeSpecifier)), (
+            f"found {palette_spec}, expecing an object of type {Palette} or "
+            + f"`theme.<some palette>`"
+        )
+        self._palette_spec = palette_spec
+
+        self._color_specs = color_specs = dict.fromkeys(self._style_colors_)
+        self._elems = elems = dict.fromkeys(self._style_elements_)
+
+        # make sure all the style colors are specified
+        for colorname in self._style_colors_:
+            assert (
+                colorname in kwargs
+            ), f"{type(self).__name__}(...) expecting keyword argument '{colorname}'"
+            color_specs[colorname] = kwargs.pop(colorname)
+
+        for colorname in self._style_elements_:
+            assert (
+                colorname in kwargs
+            ), f"{type(self).__name__}(...) expecting keyword argument '{colorname}'"
+            elems[colorname] = kwargs.pop(colorname)
+
+        # check there are no extra keyword arguments
+        assert len(kwargs) == 0, (
+            "unexpected keyword argument(s) "
+            + f"{', '.join(repr(kw) for kw in kwargs.keys())}"
+        )
+
+    @classmethod
+    def _init_style_subclass(cls):
+        # check was initied correctly
+        if not isinstance(cls._style_colors_, tuple):
+            raise TypeError(
+                f"{cls} incorrectly subclassed from Style, the ._style_colors_ "
+                + "class variable should be a tuple of color names,"
+                + f" found {repr(cls._style_colors_)}"
+            )
+        if not isinstance(cls._style_elements_, tuple):
+            raise TypeError(
+                f"{cls} incorrectly subclassed from Style, the ._style_elements_ "
+                + "class variable should be a tuple of style element names,"
+                + f" found {repr(cls._style_elements_)}"
+            )
+
+
+class StyledWidget(Widget):
+    pass
+
+
+class StyledAttribute:
+    def __init__(self, attrname, style_attr_name):
+        self._attrname = attrname
+        self._priv_attrname = f"_styled_{attrname}_attr_"
+        self._style_attr_name = style_attr_name
+
+    def __repr__(self):
+        return (
+            f"<{type(self).__name__} .{_attrname} "
+            + f"<- <style>.{self._style_attr_name}>"
+        )
+
+    def __get__(self, owner, ownertype):
+        assert hasattr(owner, self._priv_attrname), (
+            f"``{owner}.{self._attrname}`` attribute not initialized, "
+            + f"styled `{type(owner).__name__}.{self._attrname}` attributes must be "
+            + f"initialized to `None` or some value"
+        )
+
+        privattr = getattr(owner, self._priv_attrname)
+        if privattr is None:  # resolve the attr form style
+            styledattr = owner._style_._get_attr_(self._style_attr_name)
+            if isinstance(styledattr, Specifier):
+                styledattr = styledattr._resolve_specified_(owner)
+            setattr(owner, self._priv_attrname, styledattr)
+            return styledattr
+        else:
+            return privattr
+
+    def __set__(self, owner, value):
+        setattr(owner, self._priv_attrname, value)
