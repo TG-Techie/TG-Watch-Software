@@ -38,7 +38,7 @@ class Rect(Widget):
         if radius is None:
             radius = self._screen_.default.radius
         if isinstance(radius, DimensionSpecifier):
-            radius = radius._calc_dim_()
+            radius = radius._resolve_specified_()
 
         self._radius = min(radius, self.width // 2, self.height // 2)
 

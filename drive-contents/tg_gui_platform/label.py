@@ -44,43 +44,44 @@ FIXME = lambda v: v
 @styled(label_style=LabelStyle)
 class Label(StyledWidget):
 
+    _font = StyledAttribute("_font", "font")
     _alignment = StyledAttribute("_alignment", "alignment")
 
     def __init__(
         self,
         text,
-        _alignment=None,
-        _font=None,
+        alignment=None,
+        font=None,
         **kwargs,
     ):
         super().__init__(**kwargs)
         self._text_state = text
-        self._font = _font
-        self._alignment = _alignment
+        self._font = font
+        self._alignment = alignment
 
     def _pickup_(self):
         unlink_from_src(widget=self, src=self._text_state)
         super()._pickup_()
 
-    def _on_nest_(self):
-        """
-        Resolve defaults for any inputs if no input was provided.
-        """
-
-        print(self, self._style_)
-
-        # if self._font is None:
-        #     self._font = self._style_.font
-        #
-        # if self._alignment is None:
-        #     self._alignment = self._style_.alignment
+    # def _on_nest_(self):
+    #     """
+    #     Resolve defaults for any inputs if no input was provided.
+    #     """
+    #
+    #     print(self, self._style_)
+    #
+    #     # if self._font is None:
+    #     #     self._font = self._style_.font
+    #     #
+    #     # if self._alignment is None:
+    #     #     self._alignment = self._style_.alignment
 
     def _build_(self):
         global imple
 
         super()._build_()
 
-        print(f"self._style_={self._style_}")
+        # print(f"self._style_={self._style_}")
         # (text_color,) = self._resolve_style_()
         self._group = group = imple.Label(
             text="___",
@@ -88,7 +89,7 @@ class Label(StyledWidget):
             coord=self._rel_coord_,
             dims=self._phys_size_,
             alignment=self._alignment,
-            scale=FIXME(2),
+            scale=imple.font_to_platform_size[self._font],
         )
 
         # self._update_color()
@@ -99,7 +100,7 @@ class Label(StyledWidget):
         else:
             self._update_text(text_state)
 
-        print(self._style_)
+        # print(self._style_)
         self._update_colors_(**self._style_._colors_)
 
     def _demolish_(self):

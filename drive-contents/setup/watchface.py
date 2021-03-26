@@ -18,16 +18,16 @@ class default_face(Layout):
     )
 
     percent = Label(
-        text=DerivedState(
+        DerivedState(
             (power.bat_percent, power.charging),
             lambda b, s: f"^{round(b)}%" if s else f"{round(b)}%",
         ),
-        size=3,
-        _alignment=align.trailing,
+        font=font.subheading,
+        alignment=align.trailing,
     )
 
-    time_lbl = Label(size=7, text=timestr)
-    date_lbl = Label(size=3, text=datestr)
+    time_lbl = Label(text=timestr, font=font.giant)
+    date_lbl = Label(text=datestr, font=font.title)
 
     # apps_but = Button(
     #     text="Apps",

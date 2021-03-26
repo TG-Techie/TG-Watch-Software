@@ -266,16 +266,16 @@ class Widget:  # protocol
         # format dims
         width, height = dim_spec
         if isinstance(width, DimensionSpecifier):
-            width = width._calc_dim_(self)
+            width = width._resolve_specified_(self)
         if isinstance(height, DimensionSpecifier):
-            height = height._calc_dim_(self)
+            height = height._resolve_specified_(self)
 
         margin = self._margin_spec
         if margin is None:
             margin = self._screen_.min_margin
 
         if isinstance(margin, DimensionSpecifier):
-            margin = margin._calc_dim_(self)
+            margin = margin._resolve_specified_(self)
 
         self._margin_ = margin
         self._size_ = (width, height)

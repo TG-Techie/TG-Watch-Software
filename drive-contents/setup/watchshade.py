@@ -48,18 +48,18 @@ class shade(Pages):
 
         open_time = Button(
             text="time",
-            radius=ratio(height // 2),
-            press=lambda: None,
+            # radius=ratio(height // 2),
+            action=lambda: None,
         )
 
         print(f"Layout._decalrable_={Layout._decalrable_}")
         open_torch = Button(
             text="torch",
-            radius=ratio(height // 2),
-            press=self._superior_.open_page(self._superior_.torch_panel),
+            # radius=ratio(height // 2),
+            action=self._superior_.open_page(self._superior_.torch_panel),
         )
 
-        reset = Button(text="Reset", press=_should_be_sys_reset)
+        reset = Button(text="Reset", action=_should_be_sys_reset)
 
         def _any_(self):
             slider = self.slider(top, (self.width, self.height // 4))
@@ -76,7 +76,7 @@ class shade(Pages):
         rect = Rect(fill=color.white)
         back = Button(
             text="<",
-            press=self._superior_.pop_view(),
+            action=self._superior_.pop_view(),
             margin=12,
         )
 

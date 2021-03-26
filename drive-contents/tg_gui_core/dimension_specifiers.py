@@ -22,11 +22,17 @@
 
 # TODO: consider making dim_specs subclasses of spcifiers
 
-from ._shared import ConstantGroup
+from ._shared import ConstantGroup, uid
+from .specifiers import Specifier
 
 
-class DimensionSpecifier:
-    def _calc_dim_(self, inst):
+class DimensionSpecifier(Specifier):
+    def __init__(self, *_, **__):
+        raise NotImplementedError(
+            "subclasses of DimensionSpecifier must implement `.__init__`"
+        )
+
+    def _resolve_specified_(self, inst):
         raise NotImplementedError("cannot use a bare DimensionSpecifier")
 
 
@@ -61,8 +67,12 @@ class DimensionExpression:
     _dimensions = _dimensions
 
     def __init__(self, operations, dimension):
+        self._id_ = uid()
         self._is_horizontal = bool(dimension is _dimensions.horizontal)
         self._operation_sequence = operations
+
+    def _code_str_(self):
+        return "<DimExpr>"
 
     def __repr__(self):
         dimension = "width" if self._is_horizontal else "height"
@@ -138,10 +148,14 @@ class DimensionExpressionConstructor:
 # for import
 class ratio(DimensionSpecifier):
     def __init__(self, expr):
+        self._id_ = uid()
         self._base_expr = expr
 
-    def _calc_dim_(self, inst):
+    def _resolve_specified_(self, inst):
         return self._base_expr._calc_dim(inst.dims)
+
+    def _code_str_(self):
+        return f"ratio({self._base_expr})"
 
 
 height = DimensionExpressionConstructor(

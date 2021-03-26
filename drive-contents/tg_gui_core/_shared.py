@@ -57,5 +57,12 @@ class ConstantGroup:
         for name, sub in subs_dict.items():
             setattr(self, name, sub)
 
+    def __getattr__(self, name):
+        attr = self._subs.get(name, None)
+        if attr is None:
+            raise AttributeError(f"{self} has not attribute `.{name}`")
+        else:
+            return attr
+
     def __repr__(self):
         return f"<ConstantGroup {self._name}>"

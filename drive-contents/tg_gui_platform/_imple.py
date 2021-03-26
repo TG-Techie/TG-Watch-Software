@@ -29,7 +29,7 @@ import vectorio
 import terminalio
 import math
 
-from tg_gui_core import *
+from tg_gui_core import font, align
 
 from adafruit_display_text.label import Label as Dispio_Label
 
@@ -43,7 +43,29 @@ from adafruit_display_shapes.roundrect import RoundRect
 
 from adafruit_progressbar import ProgressBar
 
+# TODO: manually make a progress bar based off of shape to reduce memory use
+
 _DEBUG_FILE = False
+
+font_to_platform_size = {
+    font.giant: 7,
+    font.largetitle: 4,
+    font.title: 3,
+    font.heading: 2,
+    font.subheading: 2,
+    font.label: 2,
+    font.body: 2,
+    font.footnote: 1,
+}
+
+# patch ProgressBar for updateable color
+
+
+def _update_bar_color(bar, color):
+    bar._palette[2] = color
+
+
+ProgressBar.bar_color = property(lambda bar: bar._palette[2]).setter(_update_bar_color)
 
 if not _DEBUG_FILE:
     Group = displayio.Group

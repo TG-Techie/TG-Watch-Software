@@ -25,4 +25,4 @@ from .rect import Rect
 from .label import Label, LabelStyle
 from .button import Button, ButtonStyle
 from .progress_bar import ProgressBar
-from .slider import Slider
+from .slider import Slider, SliderStyle

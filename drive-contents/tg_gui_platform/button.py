@@ -65,9 +65,9 @@ class Button(StyledWidget):
         text,
         *,
         action,
-        _font=None,
-        _alignment=None,
-        _radius=None,
+        font=None,
+        alignment=None,
+        radius=None,
         _y_adj=0,
         _x_adj=0,
         **kwargs,
@@ -78,9 +78,9 @@ class Button(StyledWidget):
         self._y_adj = _y_adj
         self._x_adj = _x_adj
 
-        self._font = _font
-        self._alignment = _alignment
-        self._radius = _radius
+        self._font = font
+        self._alignment = alignment
+        self._radius = radius
 
         self._action_spec = action
 
@@ -112,7 +112,7 @@ class Button(StyledWidget):
         # if radius is None:
         #     self._radius = radius = self._screen_.default.radius
         # if isinstance(radius, DimensionSpecifier):
-        #     self._radius = radius = radius._calc_dim_(self)
+        #     self._radius = radius = radius._resolve_specified_(self)
 
         print(self._radius)
         radius = min(self._radius, self.width // 2, self.height // 2)

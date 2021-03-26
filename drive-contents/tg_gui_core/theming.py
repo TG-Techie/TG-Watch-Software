@@ -20,7 +20,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-# TODO: make SubTheme
+# TODO: see list
+#   make SubTheme,
+#   add deregistering code to StyledWidget,
+#   optimized for un-used source_state lists
 
 from .base import Widget
 from ._shared import uid, ConstantGroup
@@ -40,6 +43,7 @@ align = ConstantGroup(
 font = ConstantGroup(
     "font",
     (
+        "giant",
         "largetitle",
         "title",
         "heading",
@@ -307,13 +311,17 @@ class Theme:
             )
 
     def _resolve_theme_(self, widget):
+        screen = widget._screen_
+        self.min_size = screen.min_size
+        self.min_visible = screen.min_visible
+        self.min_margin = screen.min_margin
+
         # init the palettes, be sure to setup plain first
         self.plain._setup_(self, "plain")
         self.action._setup_(self, "action")
         self.warning._setup_(self, "warning")
         self.alert._setup_(self, "alert")
 
-        self._is_setup_ = True
         return self
 
     def __repr__(self):
@@ -538,7 +546,6 @@ class StyledWidget(Widget):
         assert style is None or isinstance(style, (Style, StyleConstructor))
 
     def _nest_in_(self, superior):
-        print(f"{self}._nest_in_({superior})")
         super()._nest_in_(superior)
 
         style = self._style_
@@ -548,8 +555,11 @@ class StyledWidget(Widget):
             style = getattr(theme, self._style_name_)
         elif isinstance(style, StyleConstructor):
             style = style._construct_(theme)
-        print(self._style_type_)
-        assert isinstance(style, self._style_type_), f"TODO: error message"
+        assert isinstance(style, self._style_type_), (
+            f"{type(self).__name__}(...) style arguement must be a "
+            + f"{self._style_type_.__name__}(...) or "
+            + f"{self._style_type_.__name__}.subsstyle(...),  found {style}"
+        )
 
         style._setup_(theme)
         style._register_handler_(self, self._update_colors_)
@@ -565,7 +575,7 @@ class StyledAttribute:
 
     def __repr__(self):
         return (
-            f"<{type(self).__name__} .{_attrname} "
+            f"<{type(self).__name__} .{self._attrname} "
             + f"<- <style>.{self._style_attr_name}>"
         )
 
@@ -580,7 +590,9 @@ class StyledAttribute:
 
         if privattr is None:  # resolve the attr form style
             styledattr = owner._style_._elems_.get(self._style_attr_name, None)
-            if styledattr is None:
+            if isinstance(styledattr, Specifier):
+                styledattr = styledattr._resolve_specified_(owner)
+            elif styledattr is None:
                 raise AttributeError(
                     f"{owner}'s style has no '{self._style_attr_name}' element.\n"
                     + f"Error occured when trying to fetch the default value for {owner}'s "

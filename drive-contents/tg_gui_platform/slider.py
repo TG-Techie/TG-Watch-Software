@@ -20,38 +20,37 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from tg_gui_core import *
+from tg_gui_core import State, StyledWidget, Style, StyledAttribute, styled, clamp
 from . import _imple as imple
 
-# TODO: make the knob aligned with the center of the
-#   touch once the finger starts moving
+
+class SliderStyle(Style):
+    _style_colors_ = ("bar", "knob_border", "knob")
+    _style_elements_ = ("bar_thickness", "radius", "border_thickness")
 
 
-class Slider(Widget):
-    def __init__(self, *, value, palette=None, _debug=False, **kwargs):
+@styled(slider_style=SliderStyle)
+class Slider(StyledWidget):
+
+    _radius = StyledAttribute("_radius", "radius")
+
+    def __init__(self, value, *, _debug=False, **kwargs):
         super().__init__(**kwargs)
         self._state = value  # the state object to update
         assert isinstance(value, State)
-        self._palette = palette
 
         self._debug = _debug
 
         self._start_coord = None
         self._started_in_limits = None
         self._selected = False
-
-    # _selected_ = property(lambda self: self._selected)
-
-    def _on_nest_(self):
-        if self._palette is None:
-            self._palette = self._screen_.palettes.primary
+        self._radius = None
 
     def _build_(self):
         super()._build_()
 
         screen = self._screen_
-        palette = self._palette
-        debug = self._debug
+        style = self._style_
 
         sx, sy = self._coord_
         sw, sh = self._size_
@@ -60,7 +59,9 @@ class Slider(Widget):
 
         knob_dim = min(rh, screen.min_size)
 
-        self._group = group = imple.Group(x=rx, y=ry, max_size=(4 if debug else 3))
+        self._group = group = imple.Group(
+            x=rx, y=ry, max_size=(4 if self._debug else 3)
+        )
 
         self._bar = bar = imple.ProgressBar(
             0,  # knob_dim // 2,  # 0,
@@ -68,7 +69,7 @@ class Slider(Widget):
             rw,
             12,
             stroke=0,
-            bar_color=self._palette.fill_color,
+            bar_color=0xFF0000,
         )
 
         self._knob_outline = knob_outline = imple.SimpleRoundRect(
@@ -76,8 +77,8 @@ class Slider(Widget):
             rh // 2 - knob_dim // 2,
             width=knob_dim,
             height=knob_dim,
-            radius=screen.default.radius,
-            fill=color.gray,
+            radius=self._radius,
+            fill=0xFF0000,
             # stroke=knob_dim // 10,
             # outline=color.gray,
         )
@@ -88,8 +89,8 @@ class Slider(Widget):
             (rh // 2 - knob_dim // 2) + stroke,
             width=knob_dim - 2 * stroke,
             height=knob_dim - 2 * stroke,
-            radius=screen.default.radius - stroke,
-            fill=color.lightgray,
+            radius=self._radius - stroke,
+            fill=0xFF0000,
         )
 
         group.append(bar)
@@ -104,7 +105,9 @@ class Slider(Widget):
         self._pos_on_prev_update = -10000
         self._update_position(pos)
 
-        if debug:
+        self._update_colors_(**self._style_._colors_)
+
+        if self._debug:
             self._mark = mark = imple.RoundRect(
                 0,
                 rh // 2 - knob_dim // 2,
@@ -156,3 +159,8 @@ class Slider(Widget):
             self._knob_fill.x = new_pos + self._stroke
             self._bar.progress = value
             self._pos_on_prev_update = new_pos
+
+    def _update_colors_(self, *, bar, knob_border, knob):
+        self._knob_fill.fill = knob
+        self._knob_outline.fill = knob_border
+        self._bar.bar_color = bar  # hack

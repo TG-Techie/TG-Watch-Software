@@ -33,6 +33,9 @@ from setup.watchsetup import (
 
 from tg_gui_std.all import Pages, PageState
 from tg_gui_std.all import *
+
+from setup.system_view import SystemView
+
 import system
 from system import clock
 
@@ -59,12 +62,15 @@ if testing:
             lambda w, m, d: (w[0:3] + " " + m[0:3] + f" {d:02}"),
         )
         btn_style = ButtonStyle.substyle(theme.warning, selected_text=0xFFA600)
-
         body = VSplit(
             Label(
                 "hello",
                 style=LabelStyle.substyle(theme.warning),
-                _alignment=align.center,
+                alignment=align.center,
+            ),
+            Slider(
+                system.display.brightness,
+                style=SliderStyle.substyle(theme.plain),
             ),
             HSplit(Label(timestr), Label(datestr)),
             HSplit(

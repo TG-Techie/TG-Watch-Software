@@ -21,8 +21,8 @@
 # THE SOFTWARE.
 
 from ._imple import *
+from tg_gui_core import Screen, Root
 
-# from tg_gui_core.pages import Pages
 import gc
 
 debug_file = const(0)  # 0 for false, 1 for true

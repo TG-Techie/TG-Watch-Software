@@ -80,6 +80,15 @@ default_theme = Theme(
         radius=theme.radius,
         alignment=align.center,
     ),
+    slider_style=SliderStyle(
+        theme.action,
+        bar=palette.accent,
+        knob=palette.foregnd,
+        knob_border=palette.midgnd,
+        bar_thickness=theme.min_visible,
+        border_thickness=theme.border,
+        radius=ratio(height // 2),
+    ),
 )
 
 screen = DisplayioScreen(
