@@ -114,6 +114,7 @@ class Button(StyledWidget):
         # if isinstance(radius, DimensionSpecifier):
         #     self._radius = radius = radius._calc_dim_(self)
 
+        print(self._radius)
         radius = min(self._radius, self.width // 2, self.height // 2)
 
         self._group = group = imple.Group(max_size=2)
@@ -133,7 +134,7 @@ class Button(StyledWidget):
             scale=FIXME(2),  # imple.font_to_scale(self._font)
         )
         self._set_text(self._text)
-        self._update_colors_(**self._style_._colors_(self))
+        self._update_colors_(**self._style_._colors_)
 
         group.append(rect)
         group.append(label)

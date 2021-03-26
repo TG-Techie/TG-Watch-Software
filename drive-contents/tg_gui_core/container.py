@@ -88,9 +88,9 @@ class Container(Widget):  # protocol
         # else:
         #     self._theme_ = None
 
-    def _on_nest_(self):
-        if not self._theme_.issetup():
-            self._theme_._setup_(self)
+    def _nest_in_(self, superior):
+        super()._nest_in_(superior)
+        self._theme_ = self._theme_._resolve_theme_(self)
 
     def _nest_(self, widget: Widget):
         if widget not in self._nested_:

@@ -99,7 +99,8 @@ class Label(StyledWidget):
         else:
             self._update_text(text_state)
 
-        self._update_color_(**self._style_._colors_(self))
+        print(self._style_)
+        self._update_colors_(**self._style_._colors_)
 
     def _demolish_(self):
         if isinstance(self._text_state, State):
@@ -122,5 +123,5 @@ class Label(StyledWidget):
 
         self._group.text = text
 
-    def _update_color_(self, text):
+    def _update_colors_(self, text):
         self._group.color = text
