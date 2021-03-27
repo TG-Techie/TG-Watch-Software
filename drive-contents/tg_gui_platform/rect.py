@@ -20,50 +20,47 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from tg_gui_core import *
+from tg_gui_core import Style, StyledWidget, StyledAttribute, styled
 from . import _imple as imple
 
 
-class Rect(Widget):
-    def __init__(self, radius=None, fill=None, **kwargs):
-        super().__init__(**kwargs)
+class RectStyle(Style):
+    _style_colors_ = ("fill",)
+    _style_elements_ = ("radius",)
 
-        self._fill_state = fill
-        self._radius_src = radius
+
+@styled(rect_style=RectStyle)
+class Rect(StyledWidget):
+
+    _radius = StyledAttribute("_radius", "radius")
+
+    def __init__(self, fill=None, radius=None, **kwargs):
+
+        super().__init__(
+            style=(None if fill is None else RectStyle.substyle(fill=fill)),
+            **kwargs,
+        )
+        self._radius = radius
 
     def _build_(self):
         super()._build_()
 
-        radius = self._radius_src
-        if radius is None:
-            radius = self._screen_.default.radius
-        if isinstance(radius, DimensionSpecifier):
-            radius = radius._resolve_specified_()
-
-        self._radius = min(radius, self.width // 2, self.height // 2)
+        radius = min(self._radius, self.width // 2, self.height // 2)
 
         self._group = imple.SimpleRoundRect(
             *(self._rel_coord_ + self._phys_size_),
-            radius=self._radius,
+            radius=radius,
         )
 
-        # self._update_color()
-        fill_state = self._fill_state
-        if isinstance(fill_state, State):
-            fill_state._register_handler_(self, self._update_color)
-            self._update_color(fill_state.value(self))
-        else:
-            self._update_color(fill_state)
+        self._update_colors_(**self._style_._colors_)
 
     def _demolish_(self):
         if isinstance(self._fill_state, State):
             self._fill_state._deregister_handler_(self)
         super()._demolish_()
 
-    def _update_color(self, fill):
+    def _update_colors_(self, *, fill):
 
-        if fill is None:
-            fill = self._screen_.default._fill_color_
         assert isinstance(fill, int)
         if self.isplaced():
             self._group.fill = fill

@@ -89,6 +89,18 @@ default_theme = Theme(
         border_thickness=theme.border,
         radius=ratio(height // 2),
     ),
+    progress_style=ProgressBarStyle(
+        theme.action,
+        bar=palette.accent,
+        border=palette.foregnd,
+        bar_thickness=10,
+        border_thickness=1,
+    ),
+    rect_style=RectStyle(
+        theme.plain,
+        fill=palette.accent,
+        radius=theme.radius,
+    ),
 )
 
 screen = DisplayioScreen(

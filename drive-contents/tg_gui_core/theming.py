@@ -528,7 +528,7 @@ class Style:
 
     def _on_source_color_update(self, _):
         colors = self._colors_
-        for colorname, state in self._source_states:
+        for colorname, state in self._source_states.items():
             colors[colorname] = state.value(self)
 
         for handler in self._registered_widgets.values():

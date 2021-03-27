@@ -84,7 +84,11 @@ class Label(StyledWidget):
         # print(f"self._style_={self._style_}")
         # (text_color,) = self._resolve_style_()
         self._group = group = imple.Label(
-            text="___",
+            text=(
+                self._text_state
+                if isinstance(self._text_state, str)
+                else self._text_state.value(self)
+            ),
             color=0xFF0000,
             coord=self._rel_coord_,
             dims=self._phys_size_,

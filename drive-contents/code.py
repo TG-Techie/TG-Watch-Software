@@ -49,89 +49,47 @@ print(gc.mem_free())
 SWIPE_HEIGHT = const(15)
 SWIPE_WIDTH = const(20)
 
-testing = const(1)
-if testing:
-    from system import clock
 
-    @DisplayioRootWrapper(screen=screen, display=display, size=(240, 240))
-    class WatchRoot(View):
-        text_color = State(color.red)
-        timestr = DerivedState((clock.hours, clock.mins), lambda h, m: f"{h:02}:{m:02}")
-        datestr = DerivedState(
-            (clock.weekdayname, clock.monthname, clock.monthday),
-            lambda w, m, d: (w[0:3] + " " + m[0:3] + f" {d:02}"),
-        )
-        btn_style = ButtonStyle.substyle(theme.warning, selected_text=0xFFA600)
-        body = VSplit(
-            Label(
-                "hello",
-                style=LabelStyle.substyle(theme.warning),
-                alignment=align.center,
-            ),
-            Slider(
-                system.display.brightness,
-                style=SliderStyle.substyle(theme.plain),
-            ),
-            HSplit(Label(timestr), Label(datestr)),
-            HSplit(
-                Button(
-                    "hellow",
-                    action=self.toggle_color,
-                    style=btn_style,
-                ),
-                Button(
-                    "hi",
-                    action=lambda: None,
-                    style=btn_style,
-                ),
-            ),
-        )
+@DisplayioRootWrapper(screen=screen, display=display, size=(240, 240))
+class WatchRoot(Layout):
 
-        def toggle_color(self):
-            # return
-            self.text_color = color.red if self.text_color != color.red else color.green
+    swipeup = Widget(margin=0)
+    swipedown = Widget(margin=0)
+    swipeleft = Widget(margin=0)
+    swiperight = Widget(margin=0)
+    system_view = SystemView()
+
+    def _wearable_(self):
+        view = self.system_view((left, top), self.dims)
+        self.swipeup((0, 240), (self.width, SWIPE_HEIGHT))
+        self.swipedown((0, 0), (self.width, SWIPE_HEIGHT))
+        self.swipeleft((240, 0), (SWIPE_WIDTH, self.height))
+        self.swiperight((0, 0), (SWIPE_WIDTH, self.height))
 
 
-else:
+swipeup = WatchRoot.swipeup
+swipedown = WatchRoot.swipedown
+swipeleft = WatchRoot.swipeleft
+swiperight = WatchRoot.swiperight
 
-    @DisplayioRootWrapper(screen=screen, display=display, size=(240, 240))
-    class WatchRoot(Layout):
+_nop = lambda _: None
+swipeup._start_coord_ = _nop
+swipeup._update_coord_ = _nop
+swipeup._last_coord_ = lambda coord: (
+    WatchRoot.system_view.swipe_up() if coord[1] <= 0 else None
+)
 
-        swipeup = Widget(margin=0)
-        swipedown = Widget(margin=0)
-        swipeleft = Widget(margin=0)
-        swiperight = Widget(margin=0)
-        system_view = SystemView()
-
-        def _wearable_(self):
-            view = self.system_view((left, top), self.dims)
-            self.swipeup((0, 240), (self.width, SWIPE_HEIGHT))
-            self.swipedown((0, 0), (self.width, SWIPE_HEIGHT))
-            self.swipeleft((240, 0), (SWIPE_WIDTH, self.height))
-            self.swiperight((0, 0), (SWIPE_WIDTH, self.height))
-
-    swipeup = WatchRoot.swipeup
-    swipedown = WatchRoot.swipedown
-    swipeleft = WatchRoot.swipeleft
-    swiperight = WatchRoot.swiperight
-    # print(f"swipeup={swipeup}, swipedown={swipedown}")
-
-    swipeup._start_coord_ = lambda coord: None  # print('swipeup._start_coord_', coord)
-    swipeup._update_coord_ = lambda _: None
-    swipeup._last_coord_ = lambda coord: (
-        WatchRoot.system_view.swipe_up() if coord[1] <= 0 else None
-    )
-
-    swipedown._start_coord_ = lambda _: None
-    swipedown._update_coord_ = lambda _: None
-    swipedown._last_coord_ = lambda coord: (
-        WatchRoot.system_view.swipe_down() if coord[1] >= SWIPE_HEIGHT else None
-    )
-    print(gc.mem_free())
+swipedown._start_coord_ = _nop
+swipedown._update_coord_ = _nop
+swipedown._last_coord_ = lambda coord: (
+    WatchRoot.system_view.swipe_down() if coord[1] >= SWIPE_HEIGHT else None
+)
+print(gc.mem_free())
 
 gc.collect()
 WatchRoot._superior_._std_startup_()
 gc.collect()
+
 
 if __name__ == "__main__":
 
@@ -139,12 +97,14 @@ if __name__ == "__main__":
         gc.collect()
         print(gc.mem_free())
         while True:
+            # for _ in range(30):
             gc.collect()
             # print("loop:", gc.mem_free())
             # _ in range(30):
             system._refresh()
             event_loop.loop()
             display.refresh()
+        # print(dbat.value)
 
     except Exception as err:
         gc.enable()

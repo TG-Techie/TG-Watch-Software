@@ -20,21 +20,25 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-from tg_gui_core import *
+from tg_gui_core import StyledWidget, State, Style, styled, StyledAttribute, clamp
 from . import _imple as imple
 
 
-class ProgressBar(Widget):
-    def __init__(self, *, progress, palette=None, _fill_space=False, **kwargs):
+class ProgressBarStyle(Style):
+    _style_colors_ = ("bar", "border")
+    _style_elements_ = ("bar_thickness", "border_thickness")
+
+
+@styled(progress_style=ProgressBarStyle)
+class ProgressBar(StyledWidget):
+
+    _border_thickness = StyledAttribute("_border_thickness", "border_thickness")
+
+    def __init__(self, progress, *, _fill_space=False, **kwargs):
         super().__init__(**kwargs)
 
         self._fill_space = _fill_space
         self._progress_state = progress
-        self._palette = None
-
-    def _on_nest_(self):
-        if self._palette is None:
-            self._palette = self._screen_.palettes.primary
 
     def _build_(self):
         super()._build_()
@@ -53,8 +57,8 @@ class ProgressBar(Widget):
                 pw,
                 ph,
                 progress=0.0,
-                stroke=1,
-                bar_color=self._palette.fill_color,
+                stroke=self._border_thickness,
+                bar_color=0xFF0000,
             )
         else:
             self._group = group = imple.ProgressBar(
@@ -64,22 +68,24 @@ class ProgressBar(Widget):
                 height=12,
                 progress=0.0,
                 stroke=1,
-                bar_color=self._palette.fill_color,
+                bar_color=0xFF0000,
             )
 
         progress_state = self._progress_state
         # if isinstance(progress_state, State):
         progress_state._register_handler_(self, self._update_progress)
         self._update_progress(progress_state.value(self))
-        # else:
-        #     self._update_progress(self._progress_state)
-        super()._build_()
+
+        self._update_colors_(**self._style_._colors_)
 
     def _demolish_(self):
-        if isinstance(self._progress_state, State):
-            self._progress_state._deregister_handler_(self)
+        self._progress_state._deregister_handler_(self)
         super()._demolish_()
 
     def _update_progress(self, value):
         if self.isbuilt():
             self._group.progress = clamp(0.0, value, 1.0)
+
+    def _update_colors_(self, *, bar, border):
+        self._group.bar_color = bar
+        self._group.outline_color = border

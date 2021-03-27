@@ -107,6 +107,8 @@ class Slider(StyledWidget):
 
         self._update_colors_(**self._style_._colors_)
 
+        self._state._register_handler_(self, self._update_value_from_state)
+
         if self._debug:
             self._mark = mark = imple.RoundRect(
                 0,
@@ -118,6 +120,10 @@ class Slider(StyledWidget):
                 stroke=0,
             )
             group.append(mark)
+
+    def _demolish_(self):
+        self._state._deregister_handler_(self)
+        super()._demolish_()
 
     def _start_coord_(self, coord):
         # TODO: ADD EXPLANATION
@@ -138,9 +144,18 @@ class Slider(StyledWidget):
 
     def _update_coord_(self, coord):
         if self._selected:
-            value = coord[0] - self._init_x + self._initial_position
-            value = clamp(0, value, self._span)
-            self._update_position(value)
+            pixel_value = coord[0] - self._init_x + self._initial_position
+            pixel_value = clamp(0, pixel_value, self._span)
+            self._update_position(pixel_value)
+
+    def _update_value_from_state(self, value):
+        self._update_position(
+            clamp(
+                0,
+                int(value * self._span),
+                self._span,
+            )
+        )
 
     def _update_position(self, new_pos):
         self._position = new_pos

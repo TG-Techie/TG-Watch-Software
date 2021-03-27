@@ -20,7 +20,7 @@ class default_face(Layout):
     percent = Label(
         DerivedState(
             (power.bat_percent, power.charging),
-            lambda b, s: f"^{round(b)}%" if s else f"{round(b)}%",
+            lambda b, s: f"^{round(b)}%" if s else f" {round(b)}%",
         ),
         font=font.subheading,
         alignment=align.trailing,

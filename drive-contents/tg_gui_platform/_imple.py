@@ -20,12 +20,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-"""
-"""
-
 import gc
 import displayio
-import vectorio
+
+# import vectorio
 import terminalio
 import math
 
@@ -33,19 +31,9 @@ from tg_gui_core import font, align
 
 from adafruit_display_text.label import Label as Dispio_Label
 
-from adafruit_display_shapes.rect import Rect
-from adafruit_display_shapes.circle import Circle
-from adafruit_display_shapes.roundrect import RoundRect
-
-# from adafruit_display_shapes.triangle import Triangle
-# from adafruit_display_shapes.line import Line
-# from adafruit_display_shapes.polygon import Polygon
-
 from adafruit_progressbar import ProgressBar
 
 # TODO: manually make a progress bar based off of shape to reduce memory use
-
-_DEBUG_FILE = False
 
 font_to_platform_size = {
     font.giant: 7,
@@ -59,42 +47,23 @@ font_to_platform_size = {
 }
 
 # patch ProgressBar for updateable color
-
-
 def _update_bar_color(bar, color):
     bar._palette[2] = color
 
 
-ProgressBar.bar_color = property(lambda bar: bar._palette[2]).setter(_update_bar_color)
+def _update_bar_border_color(bar, color):
+    bar._palette[1] = color
 
-if not _DEBUG_FILE:
-    Group = displayio.Group
-else:
 
-    class Group(displayio.Group):
-        def __del__(self):
-            print("delling", self)
-            super().__del__()
+ProgressBar.bar_color = property(lambda bar: bar._palette[2],).setter(
+    _update_bar_color,
+)
+ProgressBar.outline_color = property(lambda bar: bar._palette[1],).setter(
+    _update_bar_border_color,
+)
 
-        max_size = property(lambda self: self._max_size)
 
-        def __init__(self, max_size=10, owner=None, **kwargs):
-            super().__init__(max_size=max_size, **kwargs)
-            self._owner = owner
-            self._max_size = max_size
-
-        def __repr__(self):
-            owner = self._owner
-            owner_str = " " + repr(owner) if owner is not None else ""
-            return f"<Group id:{id(self)} ({self._max_size}){owner_str}>"
-
-        def _repr_with_children(self):
-            return f"<Group ({self._max_size}){[self[index] for index in range(len(self))]}>"
-
-        def append(self, wid):
-            if _DEBUG_FILE and False:
-                print("group.append", wid)
-            super().append(wid)
+Group = displayio.Group
 
 
 class SimpleRoundRect(displayio.TileGrid):
@@ -225,11 +194,12 @@ class Label(displayio.Group):
     @text.setter
     def text(self, value):
 
-        if len(value) <= len(self._text):
+        if len(value) < len(self._text):
             self._text = value
             self._native._update_text(value)
             self._position_native()
         else:
+            self.pop(0)
             self._text = value
 
             # make new native display group item
@@ -241,7 +211,7 @@ class Label(displayio.Group):
             )
             self._position_native()
             # swap out for the new one (relies on being the last more item)
-            self.pop(0)
+
             self.append(native)
 
     def _position_native(self):
@@ -260,16 +230,3 @@ class Label(displayio.Group):
             raise ValueError(
                 f"{alignment} is not a valid value, must be `align.center`, `align.leading`, or `align.trailing`"
             )
-
-    def _new_native(self):
-        # TODO: no longer used, consider removing
-        self._native = native = Dispio_Label(
-            terminalio.FONT,
-            text=self._text,
-            scale=self._scale,
-            color=self._color,
-        )
-
-        self._position_native()
-        self.pop(0)
-        self.append(native)
