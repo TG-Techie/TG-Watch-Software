@@ -49,7 +49,59 @@ print(gc.mem_free())
 SWIPE_HEIGHT = const(15)
 SWIPE_WIDTH = const(20)
 
+from system import clock
 
+#
+# @DisplayioRootWrapper(screen=screen, display=display, size=(240, 240))
+# class WatchRoot(View):
+#     text_color = State(color.red)
+#     timestr = DerivedState((clock.hours, clock.mins), lambda h, m: f"{h:02}:{m:02}")
+#     datestr = DerivedState(
+#         (clock.weekdayname, clock.monthname, clock.monthday),
+#         lambda w, m, d: (w[0:3] + " " + m[0:3] + f" {d:02}"),
+#     )
+#     btn_style = ButtonStyle.substyle(theme.warning, selected_text=0xFFA600)
+#     sys_brightness = system.display.brightness
+#     body = VSplit(
+#         HSplit(
+#             Label(
+#                 "hello",
+#                 style=LabelStyle.substyle(text=text_color),
+#                 alignment=align.center,
+#             ),
+#             ProgressBar(
+#                 sys_brightness,
+#             ),
+#         ),
+#         Slider(
+#             sys_brightness,
+#             style=SliderStyle.substyle(bar=text_color),
+#         ),
+#         HSplit(Label(timestr), Label(datestr)),
+#         HSplit(
+#             Button(
+#                 "down",
+#                 action=self.down,
+#                 style=btn_style,
+#             ),
+#             Button(
+#                 "up",
+#                 action=self.up,
+#                 style=btn_style,
+#             ),
+#         ),
+#     )
+#
+#     def up(self):
+#         self.sys_brightness = clamp(0.0, self.sys_brightness + 0.1, 1.0)
+#         self.text_color = color.green
+#
+#     def down(self):
+#         self.sys_brightness = clamp(0.0, self.sys_brightness - 0.1, 1.0)
+#         self.text_color = color.red
+
+
+#
 @DisplayioRootWrapper(screen=screen, display=display, size=(240, 240))
 class WatchRoot(Layout):
 
@@ -90,7 +142,7 @@ gc.collect()
 WatchRoot._superior_._std_startup_()
 gc.collect()
 
-
+print(gc.mem_free())
 if __name__ == "__main__":
 
     try:

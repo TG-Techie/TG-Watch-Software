@@ -30,12 +30,6 @@ def deinit():
     except:
         pass
 
-    global bat_sensor
-    try:
-        bat_sensor.deinit()
-    except:
-        pass
-
     global vbus_detect
     try:
         vbus_detect.deinit()
@@ -94,6 +88,24 @@ try:
 
     vbus_detect = DigitalInOut(board.VBUS_PRESENT)
     vbus_detect.switch_to_input()
+
+    def low_bat_loop():
+        bat_sensor = LC709203F(board.I2C())
+        bat = 0.0
+
+        drivers.deinit()
+
+        print("Low power loop entered")
+
+        while bat < 2.0:
+            try:
+                bat = bat_sensor.cell_percent / 0.95
+            except RuntimeError as err:
+                print(f"Battery read failed: `{err}`")
+
+            print(f"Battery too low: {bat}%")
+            sleep(5)
+
 
 except Exception as err:
 

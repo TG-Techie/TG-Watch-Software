@@ -33,6 +33,8 @@ class SliderStyle(Style):
 class Slider(StyledWidget):
 
     _radius = StyledAttribute("_radius", "radius")
+    _bar_thickness = StyledAttribute("_bar_thickness", "bar_thickness")
+    _border_thickness = StyledAttribute("_border_thickness", "border_thickness")
 
     def __init__(self, value, *, _debug=False, **kwargs):
         super().__init__(**kwargs)
@@ -45,6 +47,8 @@ class Slider(StyledWidget):
         self._started_in_limits = None
         self._selected = False
         self._radius = None
+        self._bar_thickness = None
+        # self._bar_thickness = None
 
     def _build_(self):
         super()._build_()
@@ -62,13 +66,11 @@ class Slider(StyledWidget):
         self._group = group = imple.Group(
             x=rx, y=ry, max_size=(4 if self._debug else 3)
         )
-
+        h = self._bar_thickness
         self._bar = bar = imple.ProgressBar(
-            0,  # knob_dim // 2,  # 0,
-            rh // 2 - 6,
-            rw,
-            12,
-            stroke=0,
+            (1, rh // 2 - h // 2),
+            (rw - 2, h),
+            # stroke=0,
             bar_color=0xFF0000,
         )
 
@@ -172,7 +174,7 @@ class Slider(StyledWidget):
 
             self._knob_outline.x = new_pos
             self._knob_fill.x = new_pos + self._stroke
-            self._bar.progress = value
+            self._bar.set_progress(value)
             self._pos_on_prev_update = new_pos
 
     def _update_colors_(self, *, bar, knob_border, knob):

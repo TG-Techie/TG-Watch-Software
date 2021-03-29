@@ -123,6 +123,12 @@ palette = SpecifierReference(
     constructs=PaletteAttributeSpecifier,
 )
 
+palette.foregnd = palette.foregnd
+palette.pregnd = palette.pregnd
+palette.midgnd = palette.midgnd
+palette.postgnd = palette.postgnd
+palette.backgnd = palette.backgnd
+
 
 class Palette:
     _default_color_set = {
@@ -322,7 +328,8 @@ class Theme:
         self.warning._setup_(self, "warning")
         self.alert._setup_(self, "alert")
 
-        return self
+        for style in self._widget_styles.values():
+            style._setup_(self)
 
     def __repr__(self):
         return f"<{type(self).__name__} {self._id_}>"
@@ -376,90 +383,16 @@ def _add_styleclass_to_styledwidgetclass(name, stylecls, widgetcls):
     return widgetcls  # part of a decorator
 
 
-class StyleConstructor:
-    def __init__(self, basetype, palette_spec=None, kwargs={}):
-        self._basetype = basetype
-        self._palette = palette_spec
-        self._kwargs = kwargs
-        self._style = None
-
-    def _construct_(self, theme):
-        return (
-            self._make_and_return_style(theme) if self._style is None else self._style
-        )
-
-    def _make_and_return_style(self, theme):
-
-        assert isinstance(theme, Theme)
-        basetype = self._basetype
-        base_style = getattr(theme, basetype._name_)
-
-        palette = self._palette
-        if palette is None:
-            palette = base_style._palette
-
-        specs_and_attrs = dict.fromkeys(
-            basetype._style_colors_ + basetype._style_elements_
-        )
-
-        specs_and_attrs.update(base_style._colors_)
-        specs_and_attrs.update(base_style._elems_)
-        specs_and_attrs.update(self._kwargs)
-
-        self._basetype = None
-        self._palette = None
-        self._kwargs = None
-
-        self._style = style = basetype(
-            palette,
-            **specs_and_attrs,
-        )
-
-        return style
-
-
 class Style:
     _style_colors_ = None  # can be colors, specs, or states
     _style_elements_ = None  # radius, font, etc
+    _MISSING = object()
 
     @classmethod
     def substyle(cls, palette_spec=None, **kwargs):
-        return StyleConstructor(cls, palette_spec, kwargs)
-
-    def __init__(self, palette_spec, **kwargs):
-
-        assert isinstance(palette_spec, (Palette, ThemeAttributeSpecifier)), (
-            f"found {palette_spec}, expecing an object of type {Palette} or "
-            + f"`theme.<some palette>`"
-        )
-        self._id_ = uid()
-        self._palette = palette_spec
-
-        # mutates from a dict of color specs to a dict fo colors
-        self._colors_ = color_specs = dict.fromkeys(self._style_colors_)
-        self._source_states = {}
-        self._registered_widgets = {}
-
-        self._elems_ = elems = dict.fromkeys(self._style_elements_)
-
-        # make sure all the style colors are specified
-        for colorname in self._style_colors_:
-            assert (
-                colorname in kwargs
-            ), f"{type(self).__name__}(...) expecting keyword argument '{colorname}'"
-            color_specs[colorname] = kwargs.pop(colorname)
-
-        for colorname in self._style_elements_:
-            assert (
-                colorname in kwargs
-            ), f"{type(self).__name__}(...) expecting keyword argument '{colorname}'"
-            elems[colorname] = kwargs.pop(colorname)
-
-        # check there are no extra keyword arguments
-        assert len(kwargs) == 0, (
-            "unexpected keyword argument(s) "
-            + f"{', '.join(repr(kw) for kw in kwargs.keys())}"
-        )
+        if palette_spec is None:
+            palette_spec = cls._MISSING
+        return cls(palette_spec, _future_construct=True, **kwargs)
 
     @classmethod
     def _init_style_subclass(cls):
@@ -477,7 +410,53 @@ class Style:
                 + f" found {repr(cls._style_elements_)}"
             )
 
+    def __init__(self, palette_spec, *, _future_construct=False, **kwargs):
+        self._id_ = uid()
+
+        # base_style(
+        #     f"{self}: {type(self)}({palette_spec}, *, _future_construct={_future_construct}, **kwargs={kwargs})"
+        # )
+
+        self._palette = palette_spec
+
+        self._color_specs = color_specs = dict.fromkeys(
+            self._style_colors_, self._MISSING
+        )
+        self._colors_ = colors = dict.fromkeys(self._style_colors_, self._MISSING)
+        self._elems_ = elems = dict.fromkeys(self._style_elements_, self._MISSING)
+        # self._source_states = {}
+        self._registered_widgets = {}
+
+        # load kwargs into dicts
+        for colorname in color_specs:
+            # assert (
+            #     _future_construct or colorname in kwargs
+            # ), f"missing expected keyword argument '{coloranme}'"
+            if colorname in kwargs:  # or not _future_construct:
+                spec = kwargs.pop(colorname)
+                color_specs[colorname] = spec
+
+        for elemname in self._style_elements_:
+            # assert (
+            #     _future_construct or elemname in kwargs
+            # ), f"missing expected keyword argument '{elemname}'"
+            if elemname in kwargs:  # or not _future_construct:
+                elem = kwargs.pop(elemname)
+                elems[elemname] = elem
+
+        assert (
+            len(kwargs) == 0
+        ), f"unexpected keyword arguments {','.join(repr(kw) for kw in kwargs)}"
+
+        self._future_construct = _future_construct
+        self._is_setup = False
+
     def _setup_(self, theme):
+        MISSING = self._MISSING
+        if self._future_construct:
+            self._load_defaults_into_missing(theme)
+            # base_style(f"{self}._specify({theme})")
+
         global color
         palette = self._palette
         if isinstance(palette, ThemeAttributeSpecifier):
@@ -486,28 +465,30 @@ class Style:
         self._palette = palette
 
         colors = self._colors_
-        states = self._source_states
-        for name, color_spec in colors.items():
-
-            if isinstance(color_spec, (int, color)):
+        handler = self._respecify_stateful_colors
+        for name, color_spec in self._color_specs.items():
+            assert color_spec is not MISSING, (self, name)
+            if isinstance(color_spec, int):
                 color = color_spec
             elif isinstance(color_spec, ThemeAttributeSpecifier):
                 color = color_spec._resolve_specified_(theme)
             elif isinstance(color_spec, PaletteAttributeSpecifier):
                 color = color_spec._resolve_specified_(palette)
             elif isinstance(color_spec, State):
-                states[name] = color_spec
-                color_spec._register_handler_(self, self._on_source_color_update)
+                color_spec._register_handler_(self, handler)
                 color = color_spec.value(self)
             else:
                 raise TypeError(
-                    f"{type(self).__name__}.{color_name} atttribute must be an int,  "
-                    + f"a State object, some `theme.<some attr>`, or `palette.<some attr>`"
+                    f"{type(self).__name__}.{name} atttribute must be an int,  "
+                    + "a State object, some `theme.<some attr>`, or `palette.<some attr>`, "
+                    + f"found `{repr(color_spec)}` of type {type(color_spec)}"
                 )
+            # base_style(self, name, color_spec)
             colors[name] = color
 
         elems = self._elems_
         for name, elem_spec in elems.items():
+            assert elem_spec is not MISSING, (self, name)
             if isinstance(elem_spec, ThemeAttributeSpecifier):
                 elem = elem_spec._resolve_specified_(theme)
             elif isinstance(elem_spec, PaletteAttributeSpecifier):
@@ -515,6 +496,34 @@ class Style:
             else:
                 elem = elem_spec
             elems[name] = elem
+
+        self._is_setup = True
+
+    def _load_defaults_into_missing(self, theme):
+
+        MISSING = self._MISSING
+        base_style = getattr(theme, self._name_)
+        assert base_style._is_setup, f"{base_style} not setup"
+
+        if self._palette is MISSING:
+            self._palette = base_style._palette
+
+        specs = self._color_specs
+        base_specs = base_style._color_specs
+        for colorname, spec in specs.items():
+            if spec is MISSING:
+                specs[colorname] = base_specs[colorname]
+        else:
+            del specs, base_specs, colorname, spec
+
+        elems = self._elems_
+        base_elems = base_style._elems_
+        for elemname, elem in elems.items():
+            if elem is MISSING:
+                # base_style("base_elems", elemname, base_elems[elemname])
+                elems[elemname] = base_elems[elemname]
+        else:
+            del elems, base_elems, elemname, elem
 
     def _register_handler_(self, widget, handler):
         assert isinstance(widget, StyledWidget), f"found {widget}"
@@ -526,10 +535,11 @@ class Style:
         assert widget._id_ in self._registered_widgets
         self._registered_widgets.pop(widget._id_)
 
-    def _on_source_color_update(self, _):
+    def _respecify_stateful_colors(self, _):
         colors = self._colors_
-        for colorname, state in self._source_states.items():
-            colors[colorname] = state.value(self)
+        for colorname, state in self._color_specs.items():
+            if isinstance(state, State):
+                colors[colorname] = state.value(self)
 
         for handler in self._registered_widgets.values():
             handler(**colors)
@@ -543,7 +553,7 @@ class StyledWidget(Widget):
         super().__init__(**kwargs)
 
         self._style_ = style
-        assert style is None or isinstance(style, (Style, StyleConstructor))
+        assert style is None or isinstance(style, (Style))
 
     def _nest_in_(self, superior):
         super()._nest_in_(superior)
@@ -553,14 +563,13 @@ class StyledWidget(Widget):
         theme = self._superior_._theme_
         if style is None:
             style = getattr(theme, self._style_name_)
-        elif isinstance(style, StyleConstructor):
-            style = style._construct_(theme)
+        # elif isinstance(style, StyleConstructor):
+        #     style = style._construct_(theme)
         assert isinstance(style, self._style_type_), (
             f"{type(self).__name__}(...) style arguement must be a "
             + f"{self._style_type_.__name__}(...) or "
             + f"{self._style_type_.__name__}.subsstyle(...),  found {style}"
         )
-
         style._setup_(theme)
         style._register_handler_(self, self._update_colors_)
 

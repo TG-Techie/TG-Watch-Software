@@ -31,9 +31,7 @@ from tg_gui_core import font, align
 
 from adafruit_display_text.label import Label as Dispio_Label
 
-from adafruit_progressbar import ProgressBar
-
-# TODO: manually make a progress bar based off of shape to reduce memory use
+# from adafruit_progressbar import ProgressBar
 
 font_to_platform_size = {
     font.giant: 7,
@@ -45,23 +43,6 @@ font_to_platform_size = {
     font.body: 2,
     font.footnote: 1,
 }
-
-# patch ProgressBar for updateable color
-def _update_bar_color(bar, color):
-    bar._palette[2] = color
-
-
-def _update_bar_border_color(bar, color):
-    bar._palette[1] = color
-
-
-ProgressBar.bar_color = property(lambda bar: bar._palette[2],).setter(
-    _update_bar_color,
-)
-ProgressBar.outline_color = property(lambda bar: bar._palette[1],).setter(
-    _update_bar_border_color,
-)
-
 
 Group = displayio.Group
 
@@ -127,23 +108,20 @@ class SimpleRoundRect(displayio.TileGrid):
 
     @fill.setter
     def fill(self, value):
-        if value is None:
-            self._palette.make_transparent(1)
-        else:
-            self._palette.make_opaque(1)
-            self._palette[1] = value
+        self._palette[1] = value
 
-    @property
-    def width(self):
-        return self._width
-
-    @property
-    def height(self):
-        return self._height
-
-    @property
-    def radius(self):
-        return self._radius
+    # @property
+    # def width(self):
+    #     return self._width
+    #
+    # @property
+    # def height(self):
+    #     return self._height
+    #
+    # @property
+    # def radius(self):
+    #     return self._radius
+    #
 
 
 class Label(displayio.Group):
@@ -174,9 +152,6 @@ class Label(displayio.Group):
         self.append(displayio.Group())
         # self._new_native()
         self._native = Dispio_Label(terminalio.FONT, text=" ")
-
-    # @property
-    # def bound_size
 
     @property
     def color(self):
@@ -230,3 +205,40 @@ class Label(displayio.Group):
             raise ValueError(
                 f"{alignment} is not a valid value, must be `align.center`, `align.leading`, or `align.trailing`"
             )
+
+
+class ProgressBar(displayio.TileGrid):
+    def __init__(self, pos, dims, *, bar_color, progress=0.0):
+        x, y = pos
+        width, height = dims
+        palette = displayio.Palette(2)
+        shape = displayio.Shape(
+            width,
+            height,
+            # mirror_x is False due to a core displayio bug
+            mirror_x=False,
+            mirror_y=True,
+        )
+
+        super().__init__(shape, pixel_shader=palette, x=x, y=y)
+
+        self._dims = dims
+        self._palette = palette
+        self._shape = shape
+
+        palette[1] = bar_color
+
+        self.progress = progress
+
+    bar_color = property(lambda self: self._palette[1])
+
+    @bar_color.setter
+    def bar_color(self, value):
+        self._palette[1] = value
+
+    def set_progress(self, value):
+        self._progress = value
+        dist = self._dims[0] - 1 if value == 1.0 else int(self._dims[0] * value)
+        shape = self._shape
+        for y in range(self._dims[1] // 2):
+            shape.set_boundary(y, 0, dist)

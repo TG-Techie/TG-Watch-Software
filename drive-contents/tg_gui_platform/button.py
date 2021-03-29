@@ -105,16 +105,6 @@ class Button(StyledWidget):
     def _build_(self):
 
         super()._build_()
-
-        # font_size = self._font_size
-        #
-        # self._radius = radius = self._radius_src
-        # if radius is None:
-        #     self._radius = radius = self._screen_.default.radius
-        # if isinstance(radius, DimensionSpecifier):
-        #     self._radius = radius = radius._resolve_specified_(self)
-
-        print(self._radius)
         radius = min(self._radius, self.width // 2, self.height // 2)
 
         self._group = group = imple.Group(max_size=2)

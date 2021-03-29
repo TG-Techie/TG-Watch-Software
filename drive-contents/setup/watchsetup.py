@@ -4,12 +4,10 @@ from . import splash_screen
 
 from tg_gui_core import *
 
-splash_screen.update_progress(0.65)
 from tg_gui_std.all import *
 from tg_gui_platform.event_loops import SinglePointEventLoop
 from tg_gui_platform.root_wrapper import DisplayioRootWrapper, DisplayioScreen
 
-splash_screen.update_progress(0.70)
 
 default_theme = Theme(
     margin=6,
@@ -29,7 +27,7 @@ default_theme = Theme(
         posttext=0xC4C4C4,
         text=0xFFFFFF,
         # accents
-        accent=0x9B9B9B,
+        accent=0x909090,
         accenttext=0xFFFFFF,
         active=0x636363,
         activetext=0xD2D2D2,
@@ -84,7 +82,7 @@ default_theme = Theme(
         theme.action,
         bar=palette.accent,
         knob=palette.foregnd,
-        knob_border=palette.midgnd,
+        knob_border=palette.pregnd,
         bar_thickness=theme.min_visible,
         border_thickness=theme.border,
         radius=ratio(height // 2),
@@ -115,6 +113,7 @@ screen = DisplayioScreen(
 )
 
 
+@micropython.native
 def get_touch_coord():
     global touchscreen
     if touchscreen.touched:
@@ -130,4 +129,3 @@ def get_touch_coord():
 event_loop = SinglePointEventLoop(screen=screen, poll_coord=get_touch_coord)
 
 display.refresh()
-splash_screen.update_progress(1.0)
