@@ -77,14 +77,14 @@ class color(int):
         r = round(255 * r ** 1.125)
         g = round(255 * g ** 1.125)
         b = round(255 * b ** 1.125)
-        return cls((r << 16) | (g << 8) | (b << 0))
+        return (r << 16) | (g << 8) | (b << 0)
 
-    @classmethod
-    def fromints(cls, r, g, b):
-        assert isinstance(r, int) and r < 256
-        assert isinstance(g, int) and g < 256
-        assert isinstance(b, int) and b < 256
-        return cls((r << 16) | (g << 8) | (b << 0))
+    # @classmethod
+    # def fromints(cls, r, g, b):
+    #     assert isinstance(r, int) and r < 256
+    #     assert isinstance(g, int) and g < 256
+    #     assert isinstance(b, int) and b < 256
+    #     return ((r << 16) | (g << 8) | (b << 0))
 
 
 def _resolve_assert_is(attr_sepc, ref, types):
