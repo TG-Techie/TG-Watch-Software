@@ -5,12 +5,9 @@ from . import splash_screen
 from tg_gui_core import *
 from tg_gui_core.base import Defaults, Palette, Palettes
 
-splash_screen.update_progress(0.65)
 from tg_gui_std.all import *
 from tg_gui_platform.event_loops import SinglePointEventLoop
 from tg_gui_platform.root_wrapper import DisplayioRootWrapper, DisplayioScreen
-
-splash_screen.update_progress(0.70)
 
 screen = DisplayioScreen(
     layout_class=layout_class.wearable,
@@ -61,4 +58,3 @@ def get_touch_coord():
 event_loop = SinglePointEventLoop(screen=screen, poll_coord=get_touch_coord)
 
 display.refresh()
-splash_screen.update_progress(1.0)
