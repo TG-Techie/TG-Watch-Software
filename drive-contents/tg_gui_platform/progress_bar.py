@@ -48,22 +48,16 @@ class ProgressBar(Widget):
 
         if self._fill_space:
             self._group = group = imple.ProgressBar(
-                rx,
-                ry,
-                pw,
-                ph,
+                (rx, ry),
+                (pw, ph),
                 progress=0.0,
-                stroke=1,
                 bar_color=self._palette.fill_color,
             )
         else:
             self._group = group = imple.ProgressBar(
-                x=rx,
-                y=ry + ph // 2 - 6,
-                width=pw,
-                height=12,
+                (rx, ry + ph // 2 - 6),
+                (pw, 12),
                 progress=0.0,
-                stroke=1,
                 bar_color=self._palette.fill_color,
             )
 
@@ -82,4 +76,4 @@ class ProgressBar(Widget):
 
     def _update_progress(self, value):
         if self.isbuilt():
-            self._group.progress = clamp(0.0, value, 1.0)
+            self._group.set_progress(clamp(0.0, value, 1.0))

@@ -33,15 +33,15 @@ from tg_gui_core import *
 
 from adafruit_display_text.label import Label as Dispio_Label
 
-from adafruit_display_shapes.rect import Rect
-from adafruit_display_shapes.circle import Circle
-from adafruit_display_shapes.roundrect import RoundRect
+# from adafruit_display_shapes.rect import Rect
+# from adafruit_display_shapes.circle import Circle
+# from adafruit_display_shapes.roundrect import RoundRect
 
 # from adafruit_display_shapes.triangle import Triangle
 # from adafruit_display_shapes.line import Line
 # from adafruit_display_shapes.polygon import Polygon
 
-from adafruit_progressbar import ProgressBar
+# from adafruit_progressbar import ProgressBar
 
 _DEBUG_FILE = False
 
@@ -251,3 +251,37 @@ class Label(displayio.Group):
         self._position_native()
         self.pop(0)
         self.append(native)
+
+
+class ProgressBar(displayio.TileGrid):
+    def __init__(self, pos, dims, *, bar_color, progress=0.0):
+        x, y = pos
+        width, height = dims
+        palette = displayio.Palette(2)
+        shape = displayio.Shape(
+            width,
+            height,
+            # mirror_x is False due to a core displayio bug
+            mirror_x=False,
+            mirror_y=True,
+        )
+
+        super().__init__(shape, pixel_shader=palette, x=x, y=y)
+
+        self._dims = dims
+        self._palette = palette
+        self._shape = shape
+
+        palette[1] = bar_color
+
+        self.progress = progress
+
+    def set_bar_color(self, value):
+        self._palette[1] = value
+
+    def set_progress(self, value):
+        self._progress = value
+        dist = self._dims[0] - 1 if value == 1.0 else int(self._dims[0] * value)
+        shape = self._shape
+        for y in range(self._dims[1] // 2):
+            shape.set_boundary(y, 0, dist)

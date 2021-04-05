@@ -64,11 +64,8 @@ class Slider(Widget):
         self._group = group = imple.Group(x=rx, y=ry, max_size=(4 if debug else 3))
 
         self._bar = bar = imple.ProgressBar(
-            0,  # knob_dim // 2,  # 0,
-            rh // 2 - 6,
-            rw,
-            12,
-            stroke=0,
+            (0, rh // 2 - 5),
+            (rw, 10),
             bar_color=self._palette.fill_color,
         )
 
@@ -155,5 +152,5 @@ class Slider(Widget):
 
             self._knob_outline.x = new_pos
             self._knob_fill.x = new_pos + self._stroke
-            self._bar.progress = value
+            self._bar.set_progress(value)
             self._pos_on_prev_update = new_pos
