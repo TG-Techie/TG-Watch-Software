@@ -5,6 +5,7 @@ from . import applocals
 import time
 import low_battery
 import microcontroller
+import gc
 
 _to_month = (
     "INVALID MONTH",
@@ -30,6 +31,21 @@ _to_weekday = (
     "Saturday",
     "Sunday",
 )
+
+# prototype memory monitor
+_mem_monitor_counter = 0
+_mem_monitor_refresh_counts = const(10)
+_mem_monitor = State(None)  # start with None
+
+
+def _refresh_mem_monitor():
+    global _mem_monitor_counter
+    # update on zero (so updates on initial state)
+    if _mem_monitor_counter == 0:
+        _mem_monitor.update(None, gc.mem_free())
+    # tick counter
+    _mem_monitor_counter = (_mem_monitor_counter + 1) % _mem_monitor_refresh_counts
+
 
 # using classes as modules, technically reduces ram size
 class clock:
@@ -180,6 +196,7 @@ def _refresh():
     clock._refresh_time()
     power._refresh()
     sensors._refresh()
+    _refresh_mem_monitor()
     # if midnight just passed:
     # clock._refresh_date()
 

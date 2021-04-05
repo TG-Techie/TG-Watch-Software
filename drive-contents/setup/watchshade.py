@@ -4,6 +4,7 @@ from system.applocals import *
 import time
 import system
 from system import display
+from system import _mem_monitor as mem_monitor
 
 
 import hardware
@@ -62,12 +63,15 @@ class shade(Pages):
 
         reset = Button(text="Reset", press=_should_be_sys_reset)
 
+        monitor = Label(text=mem_monitor >> str)
+
         def _any_(self):
             slider = self.slider(top, (self.width, self.height // 4))
             size = (self.width // 2, self.height // 4)
             open_time = self.open_time((left, center), size)
             reset = self.reset((right, center), size)
             open_torch = self.open_torch(below(open_time), size)
+            monitor = self.monitor(rightof(open_torch), size)
 
         def close_shade(self):
             self._superior_.pop_view()
