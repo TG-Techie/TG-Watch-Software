@@ -119,11 +119,31 @@ class shade(Pages):
         date_lbl = Label(size=3, text=datestr)
 
         time_selection = HSplit(
-            Hide(Rect(radius=1), when=DerivedState(active, lambda a: a != 0)),
-            Hide(Rect(radius=1), when=DerivedState(active, lambda a: a != 1)),
+            Rect(
+                radius=1,
+                fill=DerivedState(
+                    active, lambda a: color.black if a != 0 else default._fill_color_
+                ),
+            ),
+            Rect(
+                radius=1,
+                fill=DerivedState(
+                    active, lambda a: color.black if a != 1 else default._fill_color_
+                ),
+            ),
             None,
-            Hide(Rect(radius=1), when=DerivedState(active, lambda a: a != 2)),
-            Hide(Rect(radius=1), when=DerivedState(active, lambda a: a != 3)),
+            Rect(
+                radius=1,
+                fill=DerivedState(
+                    active, lambda a: color.black if a != 2 else default._fill_color_
+                ),
+            ),
+            Rect(
+                radius=1,
+                fill=DerivedState(
+                    active, lambda a: color.black if a != 3 else default._fill_color_
+                ),
+            ),
         )
 
         body = VSplit(
