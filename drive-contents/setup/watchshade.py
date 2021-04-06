@@ -2,8 +2,10 @@ from tg_gui_std.all import *
 from system.applocals import *
 
 import time
+from time import struct_time
+from system.drivers import rtc
 import system
-from system import display
+from system import display, clock
 from system import _mem_monitor as mem_monitor
 
 
@@ -39,7 +41,7 @@ class shade(Pages):
 
     def _hide_(self):
         print(self, self.page)
-        if self.page is self.torch_panel:
+        if self.page is self.torch_panel or self.page is self.time_panel:
             self.page = self.main_shade
         super()._hide_()
 
@@ -51,7 +53,7 @@ class shade(Pages):
         open_time = Button(
             text="time",
             radius=ratio(height // 2),
-            press=lambda: None,
+            press=self._superior_.open_page(self._superior_.time_panel),
         )
 
         print(f"Layout._decalrable_={Layout._decalrable_}")
@@ -102,3 +104,71 @@ class shade(Pages):
             super()._hide_()
             # always restore the original brightness
             display.brightness.update(self, shade.previous_brightness)
+
+    @singleinstance
+    class time_panel(Layout):
+        active = State(0)
+
+        timestr = DerivedState((clock.hours, clock.mins), lambda h, m: f"{h:02}:{m:02}")
+        datestr = DerivedState(
+            (clock.weekdayname, clock.monthname, clock.monthday),
+            lambda w, m, d: (w[0:3] + " " + m[0:3] + f" {d:02}"),
+        )
+
+        body = VSplit(
+            Label(size=5, text=timestr),
+            Label(size=3, text=datestr),
+            HSplit(
+                Button(text="^", press=self.increment()),
+                Button(text="->", press=self.next()),
+            ),
+        )
+
+        time_selection = HSplit(
+            Hide(Rect(radius=1), when=DerivedState(active, lambda a: a != 0)),
+            Hide(Rect(radius=1), when=DerivedState(active, lambda a: a != 1)),
+            Label(text=""),
+            Hide(Rect(radius=1), when=DerivedState(active, lambda a: a != 2)),
+            Hide(Rect(radius=1), when=DerivedState(active, lambda a: a != 3)),
+        )
+
+        def _any_(self):
+            self.time_selection(
+                (self.width // 6, self.width // 16),
+                (13 * self.width // 20, self.height // 4),
+            )
+            self.body(center, self.dims)
+
+        def increment(self):
+            temp = rtc.datetime
+            hours = temp.tm_hour
+            h_ones = hours % 10
+            h_tens = 10 * (hours // 10)
+            if self.active == 0:
+                if h_ones < 3:
+                    hours = (h_tens + 10) % 30 + h_ones
+                else:
+                    hours = (h_tens + 10) % 20 + h_ones
+            if self.active == 1:
+                if h_tens < 2:
+                    hours = h_tens + ((h_ones + 1) % 10)
+                else:
+                    hours = h_tens + ((h_ones + 1) % 3)
+
+            rtc.datetime = struct_time(
+                (
+                    temp.tm_year,
+                    temp.tm_mon,
+                    temp.tm_mday,
+                    hours,
+                    temp.tm_min,
+                    temp.tm_sec,
+                    temp.tm_wday,
+                    -1,
+                    -1,
+                )
+            )
+
+        def next(self):
+            _id_ = uid()
+            self.active = (self.active + 1) % 4
