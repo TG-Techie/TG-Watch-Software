@@ -121,7 +121,7 @@ class shade(Pages):
         time_selection = HSplit(
             Hide(Rect(radius=1), when=DerivedState(active, lambda a: a != 0)),
             Hide(Rect(radius=1), when=DerivedState(active, lambda a: a != 1)),
-            Label(text=""),
+            Label(None),
             Hide(Rect(radius=1), when=DerivedState(active, lambda a: a != 2)),
             Hide(Rect(radius=1), when=DerivedState(active, lambda a: a != 3)),
         )
@@ -177,5 +177,4 @@ class shade(Pages):
             )
 
         def next(self):
-            _id_ = uid()
             self.active = (self.active + 1) % 4
