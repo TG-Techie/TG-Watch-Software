@@ -115,14 +115,8 @@ class shade(Pages):
             lambda w, m, d: (w[0:3] + " " + m[0:3] + f" {d:02}"),
         )
 
-        body = VSplit(
-            Label(size=5, text=timestr),
-            Label(size=3, text=datestr),
-            HSplit(
-                Button(text="^", press=self.increment()),
-                Button(text="->", press=self.next()),
-            ),
-        )
+        time_lbl = Label(size=7, text=timestr)
+        date_lbl = Label(size=3, text=datestr)
 
         time_selection = HSplit(
             Hide(Rect(radius=1), when=DerivedState(active, lambda a: a != 0)),
@@ -132,16 +126,25 @@ class shade(Pages):
             Hide(Rect(radius=1), when=DerivedState(active, lambda a: a != 3)),
         )
 
+        body = VSplit(
+            ZStack(
+                time_selection,
+                time_lbl,
+            ),
+            date_lbl,
+            HSplit(
+                Button(text="^", press=self.increment()),
+                Button(text="->", press=self.next()),
+            ),
+        )
+
         def _any_(self):
-            self.time_selection(
-                (self.width // 6, self.width // 16),
-                (13 * self.width // 20, self.height // 4),
-            )
             self.body(center, self.dims)
 
         def increment(self):
             temp = rtc.datetime
             hours = temp.tm_hour
+            mins = temp.tm_min
             h_ones = hours % 10
             h_tens = 10 * (hours // 10)
             if self.active == 0:
@@ -154,6 +157,10 @@ class shade(Pages):
                     hours = h_tens + ((h_ones + 1) % 10)
                 else:
                     hours = h_tens + ((h_ones + 1) % 3)
+            if self.active == 2:
+                mins = (mins + 10) % 60
+            if self.active == 3:
+                mins = 10 * (mins // 10) + (mins + 1) % 10
 
             rtc.datetime = struct_time(
                 (
@@ -161,8 +168,8 @@ class shade(Pages):
                     temp.tm_mon,
                     temp.tm_mday,
                     hours,
-                    temp.tm_min,
-                    temp.tm_sec,
+                    mins,
+                    0,
                     temp.tm_wday,
                     -1,
                     -1,
