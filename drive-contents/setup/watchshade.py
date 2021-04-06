@@ -121,7 +121,7 @@ class shade(Pages):
         time_selection = HSplit(
             Hide(Rect(radius=1), when=DerivedState(active, lambda a: a != 0)),
             Hide(Rect(radius=1), when=DerivedState(active, lambda a: a != 1)),
-            Label(None),
+            None,
             Hide(Rect(radius=1), when=DerivedState(active, lambda a: a != 2)),
             Hide(Rect(radius=1), when=DerivedState(active, lambda a: a != 3)),
         )
