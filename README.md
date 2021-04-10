@@ -19,7 +19,7 @@ These are frozen into the TG-Watch distribution of circuitpython.
 
 # Contributing
 ### Behavior
-[Insert code of conduct link here]
+[Insert code of conduct link here once decided]
 
 However, In Short:
 - be nice
@@ -31,9 +31,9 @@ However, In Short:
 
 Using should not require understanding
 Disclose complexity progressively
-Use sugar to make code easier to read
+Use sugar to make code easier to read (not to write)
 Only infer on top of what is already explicit
-Enumerating is better than checking <this line needs revising do not stringily type an api etc>
+The fewer ways a value needs to be checked, the better
 Well written code won't be well written until it is done, so add comments
 Run ``python -c "import this"``
 If you can't read it, re-write it (cause neither can I)
