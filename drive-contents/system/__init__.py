@@ -1,7 +1,6 @@
 from tg_gui_core import State, DerivedState, uid
 import hardware
 from hardware import drivers
-from . import applocals
 import time
 import low_battery
 import microcontroller
@@ -130,28 +129,22 @@ class power:
 
     bat_percent = State(0)  # State(100.0)
     charging = State(False)
-    _min_percent = 0.0  # 20.0
-    _max_percent = 95.0
 
     _last = -2
-
-    _percent_range = _max_percent - _min_percent
 
     def _refresh():
         now = time.monotonic()
         if now - power._last > 1:
             try:
-                raw = drivers.bat_sensor.cell_percent
-                scaled = 100.0 * min(
-                    max(0, raw - power._min_percent) / power._percent_range, 1.0
-                )
-                display._phys_limits = (0.1, 0.5) if scaled <= 20.0 else (0.2, 1.0)
-                display._set_brightness(display.brightness.value(power))
-                power.bat_percent.update(power, scaled)
                 power.charging.update(power, drivers.vbus_detect.value)
+
+                value = drivers._read_bat_percent()
+                display._set_brightness(display.brightness.value(power))
+                power.bat_percent.update(power, value)
+
                 power._last = now
             except RuntimeError as err:
-                print(f"{time.monotonic()}: battery read failed: `{err}`")
+                pass
 
     def _boot():
         bat_percent = power.bat_percent.value(power)
