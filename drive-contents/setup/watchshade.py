@@ -111,12 +111,12 @@ class shade(Pages):
 
         timestr = DerivedState((clock.hours, clock.mins), lambda h, m: f"{h:02}:{m:02}")
         datestr = DerivedState(
-            (clock.weekdayname, clock.monthname, clock.monthday),
-            lambda w, m, d: (w[0:3] + " " + m[0:3] + f" {d:02}"),
+            (clock.weekdayname, clock.monthname, clock.monthday, clock.year),
+            lambda w, m, d, y: (w[0:3] + " " + m[0:3] + f" {d:2}" + f" {y:4}"),
         )
 
         time_lbl = Label(size=7, text=timestr)
-        date_lbl = Label(size=3, text=datestr)
+        date_lbl = Label(size=2, text=datestr)
 
         time_selection = HSplit(
             Rect(
@@ -146,12 +146,42 @@ class shade(Pages):
             ),
         )
 
+        date_selection = HSplit(
+            Rect(
+                radius=1,
+                fill=DerivedState(
+                    active, lambda a: color.black if a != 4 else default._fill_color_
+                ),
+            ),
+            Rect(
+                radius=1,
+                fill=DerivedState(
+                    active, lambda a: color.black if a != 5 else default._fill_color_
+                ),
+            ),
+            Rect(
+                radius=1,
+                fill=DerivedState(
+                    active, lambda a: color.black if a != 6 else default._fill_color_
+                ),
+            ),
+            Rect(
+                radius=1,
+                fill=DerivedState(
+                    active, lambda a: color.black if a != 7 else default._fill_color_
+                ),
+            ),
+        )
+
         body = VSplit(
             ZStack(
                 time_selection,
                 time_lbl,
             ),
-            date_lbl,
+            ZStack(
+                date_selection,
+                date_lbl,
+            ),
             HSplit(
                 Button(text="^", press=self.increment()),
                 Button(text="->", press=self.next()),
@@ -167,8 +197,13 @@ class shade(Pages):
             mins = temp.tm_min
             h_ones = hours % 10
             h_tens = 10 * (hours // 10)
+            weekday = temp.tm_wday
+            month = temp.tm_mon
+            monthday = temp.tm_mday
+            year = temp.tm_year
+
             if self.active == 0:
-                if h_ones < 3:
+                if h_ones < 4:
                     hours = (h_tens + 10) % 30 + h_ones
                 else:
                     hours = (h_tens + 10) % 20 + h_ones
@@ -176,25 +211,41 @@ class shade(Pages):
                 if h_tens < 2:
                     hours = h_tens + ((h_ones + 1) % 10)
                 else:
-                    hours = h_tens + ((h_ones + 1) % 3)
+                    hours = h_tens + ((h_ones + 1) % 4)
             if self.active == 2:
                 mins = (mins + 10) % 60
             if self.active == 3:
                 mins = 10 * (mins // 10) + (mins + 1) % 10
+            if self.active == 4:
+                weekday = (weekday + 1) % 7
+            if self.active == 5:
+                month = (month + 1) % 12
+            if self.active == 6:
+                if month in (0, 2, 4, 6, 7, 9, 11):
+                    monthday = (monthday % 31) + 1
+                elif month in (3, 5, 8, 11):
+                    monthday = (monthday % 30) + 1
+                else:
+                    if year % 4 == 0:
+                        monthday = (monthday % 29) + 1
+                    else:
+                        monthday = (monthday % 28) + 1
+            if self.active == 7:
+                year = 2000 + ((year % 100) + 1) % 50
 
             rtc.datetime = struct_time(
                 (
-                    temp.tm_year,
-                    temp.tm_mon,
-                    temp.tm_mday,
+                    year,
+                    month,
+                    monthday,
                     hours,
                     mins,
                     0,
-                    temp.tm_wday,
+                    weekday,
                     -1,
                     -1,
                 )
             )
 
         def next(self):
-            self.active = (self.active + 1) % 4
+            self.active = (self.active + 1) % 8
