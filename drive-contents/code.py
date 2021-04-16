@@ -1,27 +1,30 @@
-import time
 import sys
-import microcontroller
+import oh_shit
 from hardware import drivers
+
+# # try to import the hardware, this check may not be needed anymore
+# try:
+#     from hardware import drivers
+# except Exception as err:
+#     if "SCK in use" in err.args or "lock timed out" in err.args[0]:
+#         import oh_shit
+#
+#         oh_shit.reset_countdown(30, err)
+#     raise err
 
 
 if drivers._read_bat_percent() < 4:
-    if drivers.vbus_detect.value:
-        from setup import low_battery_splash
-
-    while drivers._read_bat_percent() < 4:
-        time.sleep(5)
-        print(f"[time: {time.monotonic()}] battery too low, waiting to boot")
-    else:
-        print("battery charged to 4+ percent, restarting")
-        microcontroller.reset()
+    from boot_options import low_battery
 else:
     # show splash while loading watch_gui
-    from setup import splash_screen
+    from boot_options import splash_screen
 
-    import watch_gui
+    # init the gui system
+    from boot_options import watch_gui
 
     # clean up splash
     sys.modules.pop(splash_screen.__name__)
     del splash_screen
 
-    watch_gui.run()
+    if __name__ == "__main__":
+        watch_gui.run()

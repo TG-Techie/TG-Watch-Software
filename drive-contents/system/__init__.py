@@ -2,7 +2,6 @@ from tg_gui_core import State, DerivedState, uid
 import hardware
 from hardware import drivers
 import time
-import low_battery
 import microcontroller
 import gc
 
@@ -150,10 +149,6 @@ class power:
         bat_percent = power.bat_percent.value(power)
 
         print(f"bat_percent={bat_percent}")
-
-        if bat_percent < 2.0:
-            low_battery.loop()
-            microcontroller.reset()
 
         if bat_percent > 20.0:
             display.brightness.update(power, 0.8)
