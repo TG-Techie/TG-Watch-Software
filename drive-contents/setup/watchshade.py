@@ -220,7 +220,6 @@ class shade(Pages):
                 weekday = (weekday + 1) % 7
             if self.active == 5:
                 month = (month % 12) + 1
-                print(month)
             if self.active == 6:
                 if month in (1, 3, 5, 7, 8, 10, 12):
                     monthday = (monthday % 31) + 1
