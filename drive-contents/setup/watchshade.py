@@ -2,15 +2,15 @@ from tg_gui_std.all import *
 from system.applocals import *
 
 import time
-from time import struct_time
-from system.drivers import rtc
 import system
-from system import display, clock
+from system import display
 from system import _mem_monitor as mem_monitor
+import capsuleio
 
 
 import hardware
 import microcontroller
+import supervisor
 
 
 def _should_be_sys_reset():
@@ -45,6 +45,11 @@ class shade(Pages):
             self.page = self.main_shade
         super()._hide_()
 
+    def load_time_set(self):
+        print("about to reset into time set")
+        capsuleio.bury("1")
+        supervisor.reload()
+
     @singleinstance
     class main_shade(Layout):
 
@@ -53,7 +58,7 @@ class shade(Pages):
         open_time = Button(
             text="time",
             radius=ratio(height // 2),
-            press=self._superior_.open_page(self._superior_.time_panel),
+            press=self._superior_.load_time_set(),
         )
 
         print(f"Layout._decalrable_={Layout._decalrable_}")
@@ -104,151 +109,3 @@ class shade(Pages):
             super()._hide_()
             # always restore the original brightness
             display.brightness.update(self, shade.previous_brightness)
-
-    @singleinstance
-    class time_panel(Layout):
-        active = State(0)
-
-        timestr = DerivedState((clock.hours, clock.mins), lambda h, m: f"{h:02}:{m:02}")
-        datestr = DerivedState(
-            (clock.weekdayname, clock.monthname, clock.monthday, clock.year),
-            lambda w, m, d, y: (w[0:3] + " " + m[0:3] + f" {d:2}" + f" {y:4}"),
-        )
-
-        time_lbl = Label(size=7, text=timestr)
-        date_lbl = Label(size=2, text=datestr)
-
-        time_selection = HSplit(
-            Rect(
-                radius=1,
-                fill=DerivedState(
-                    active, lambda a: color.black if a != 0 else default._fill_color_
-                ),
-            ),
-            Rect(
-                radius=1,
-                fill=DerivedState(
-                    active, lambda a: color.black if a != 1 else default._fill_color_
-                ),
-            ),
-            None,
-            Rect(
-                radius=1,
-                fill=DerivedState(
-                    active, lambda a: color.black if a != 2 else default._fill_color_
-                ),
-            ),
-            Rect(
-                radius=1,
-                fill=DerivedState(
-                    active, lambda a: color.black if a != 3 else default._fill_color_
-                ),
-            ),
-        )
-
-        date_selection = HSplit(
-            Rect(
-                radius=1,
-                fill=DerivedState(
-                    active, lambda a: color.black if a != 4 else default._fill_color_
-                ),
-            ),
-            Rect(
-                radius=1,
-                fill=DerivedState(
-                    active, lambda a: color.black if a != 5 else default._fill_color_
-                ),
-            ),
-            Rect(
-                radius=1,
-                fill=DerivedState(
-                    active, lambda a: color.black if a != 6 else default._fill_color_
-                ),
-            ),
-            Rect(
-                radius=1,
-                fill=DerivedState(
-                    active, lambda a: color.black if a != 7 else default._fill_color_
-                ),
-            ),
-        )
-
-        body = VSplit(
-            ZStack(
-                time_selection,
-                time_lbl,
-            ),
-            ZStack(
-                date_selection,
-                date_lbl,
-            ),
-            HSplit(
-                Button(text="^", press=self.increment()),
-                Button(text="->", press=self.next()),
-            ),
-        )
-
-        def _any_(self):
-            self.body(center, self.dims)
-
-        def increment(self):
-            temp = rtc.datetime
-            hours = temp.tm_hour
-            mins = temp.tm_min
-            h_ones = hours % 10
-            h_tens = 10 * (hours // 10)
-            weekday = temp.tm_wday
-            month = temp.tm_mon
-            monthday = temp.tm_mday
-            year = temp.tm_year
-
-            if self.active == 0:
-                if h_ones < 4:
-                    hours = (h_tens + 10) % 30 + h_ones
-                else:
-                    hours = (h_tens + 10) % 20 + h_ones
-            if self.active == 1:
-                if h_tens < 20:
-                    hours = h_tens + ((h_ones + 1) % 10)
-                else:
-                    hours = h_tens + ((h_ones + 1) % 4)
-            if self.active == 2:
-                mins = (mins + 10) % 60
-            if self.active == 3:
-                mins = 10 * (mins // 10) + (mins + 1) % 10
-            if self.active == 4:
-                weekday = (weekday + 1) % 7
-            if self.active == 5:
-                month = (month % 12) + 1
-            if self.active == 6:
-                if month in (1, 3, 5, 7, 8, 10, 12):
-                    monthday = (monthday % 31) + 1
-                elif month in (4, 6, 9, 11):
-                    monthday = (monthday % 30) + 1
-                else:
-                    if year % 4 == 0:
-                        monthday = (monthday % 29) + 1
-                    else:
-                        monthday = (monthday % 28) + 1
-            if self.active == 7:
-                year = 2000 + ((year % 100) + 1) % 50
-
-            rtc.datetime = struct_time(
-                (
-                    year,
-                    month,
-                    monthday,
-                    hours,
-                    mins,
-                    0,
-                    weekday,
-                    -1,
-                    -1,
-                )
-            )
-
-            clock._refresh_time()
-            clock._refresh_date()
-
-        def next(self):
-            self.active = (self.active + 1) % 8
