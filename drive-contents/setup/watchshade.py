@@ -41,7 +41,7 @@ class shade(Pages):
 
     def _hide_(self):
         print(self, self.page)
-        if self.page is self.torch_panel or self.page is self.time_panel:
+        if self.page is self.torch_panel:
             self.page = self.main_shade
         super()._hide_()
 

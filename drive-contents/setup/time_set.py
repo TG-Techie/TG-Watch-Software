@@ -16,6 +16,8 @@ from setup.watchsetup import (
 import gc
 import sys
 import time
+import capsuleio
+import supervisor
 from time import struct_time
 from system.drivers import rtc
 import system
@@ -24,6 +26,11 @@ from system import clock
 
 @DisplayioRootWrapper(screen=screen, display=display, size=(240, 240))
 class TimeView(Layout):
+    def exit_time_set(self):
+        print("about to reset out of time set")
+        capsuleio.bury("0")
+        supervisor.reload()
+
     active = State(0)
 
     timestr = DerivedState((clock.hours, clock.mins), lambda h, m: f"{h:02}:{m:02}")
@@ -102,6 +109,7 @@ class TimeView(Layout):
         HSplit(
             Button(text="^", press=self.increment()),
             Button(text="->", press=self.next()),
+            Button(text="Done", press=self.exit_time_set()),
         ),
     )
 
