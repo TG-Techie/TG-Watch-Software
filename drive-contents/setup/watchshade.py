@@ -208,7 +208,7 @@ class shade(Pages):
                 else:
                     hours = (h_tens + 10) % 20 + h_ones
             if self.active == 1:
-                if h_tens < 2:
+                if h_tens < 20:
                     hours = h_tens + ((h_ones + 1) % 10)
                 else:
                     hours = h_tens + ((h_ones + 1) % 4)
@@ -219,11 +219,12 @@ class shade(Pages):
             if self.active == 4:
                 weekday = (weekday + 1) % 7
             if self.active == 5:
-                month = (month + 1) % 12
+                month = (month % 12) + 1
+                print(month)
             if self.active == 6:
-                if month in (0, 2, 4, 6, 7, 9, 11):
+                if month in (1, 3, 5, 7, 8, 10, 12):
                     monthday = (monthday % 31) + 1
-                elif month in (3, 5, 8, 11):
+                elif month in (4, 6, 9, 11):
                     monthday = (monthday % 30) + 1
                 else:
                     if year % 4 == 0:
@@ -246,6 +247,9 @@ class shade(Pages):
                     -1,
                 )
             )
+
+            clock._refresh_time()
+            clock._refresh_date()
 
         def next(self):
             self.active = (self.active + 1) % 8
