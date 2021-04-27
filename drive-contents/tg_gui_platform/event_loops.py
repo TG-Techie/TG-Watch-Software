@@ -49,6 +49,9 @@ There are four modes for action that is taken on input:
 for now we will stick with just one updateable.
 """
 
+NOTHING_MODE = const(1)
+PRESS_MODE = const(2)
+UPDATE_MODE = const(3)
 
 class SinglePointEventLoop:
     def __init__(self, *, screen, poll_coord, update_threshold=15):
@@ -64,6 +67,7 @@ class SinglePointEventLoop:
         self._selected = None
         self._found_pressable = None
         self._found_updateable = None
+        self._mode = NOTHING_MODE
 
     def loop(self):
         # print(self._screen._pressables_)
@@ -75,25 +79,20 @@ class SinglePointEventLoop:
         # get current data
         coord = self._poll_coord()
         is_touched = bool(coord is not None)
-        # if is_touched:
-        #   print(coord)
 
-        if is_touched and not was_touched:  # if finger down
-            # print(time.monotonic_ns()/1000)
-            # scan thought all pointable widgets
-
-            screen = self._screen
+        if is_touched and not was_touched:  # if finger just went down
+            screen = self._screen # store locally as optimization
+            # scan thought all pointable.selectable widgets then the actionable ones
             for widget in screen._selectbles_:
-                # if the point being touched is a in the widget
+                # if the point being touched is in the widget
                 if has_phys_coord_in(widget, coord):
-
+                    # select then store the widget
                     widget._select_()
                     self._selected = widget
                     break
-
+            # scan the actionables
             for widget in screen._pressables_:
                 if has_phys_coord_in(widget, coord):
-
                     pressable = widget
                     self._found_pressable = pressable
                     break
@@ -135,7 +134,7 @@ class SinglePointEventLoop:
                     adjust_phys_to_rel(updateable, self._last_coord)
                 )
                 self._found_updateable = None
-        elif is_touched:  # update touch
+        elif is_touched:  # update continuous touch
             mode = self._mode
             updateable = self._found_updateable
             if updateable is not None:
