@@ -49,9 +49,6 @@ There are four modes for action that is taken on input:
 for now we will stick with just one updateable.
 """
 
-NOTHING_MODE = const(1)
-PRESS_MODE = const(2)
-UPDATE_MODE = const(3)
 
 class SinglePointEventLoop:
     def __init__(self, *, screen, poll_coord, update_threshold=15):
@@ -67,16 +64,6 @@ class SinglePointEventLoop:
         self._selected = None
         self._found_pressable = None
         self._found_updateable = None
-        self.__mode = NOTHING_MODE
-
-    # @property
-    # def _mode(self):
-    #     return self.__mode
-    #
-    # @_mode.setter
-    # def _mode(self, value):
-    #     print(self, "mode set to", value)
-    #     self.__mode = value
 
     def loop(self):
         # print(self._screen._pressables_)
