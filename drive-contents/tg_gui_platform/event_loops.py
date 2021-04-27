@@ -53,10 +53,6 @@ NOTHING_MODE = const(1)
 PRESS_MODE = const(2)
 UPDATE_MODE = const(3)
 
-HORIZONTAL_UPDATE_MODE = const(4)
-VERTICAL_UPDATE_MODE = const(5)
-
-
 class SinglePointEventLoop:
     def __init__(self, *, screen, poll_coord, update_threshold=15):
         self._poll_coord = poll_coord
