@@ -2,7 +2,7 @@
 
 The TG-Watch is an open-source, touchscreen watch for makers and students alike. This is the in-progress repository of system software and stock apps shipped with the watch.
 
-#Dependencies
+# Dependencies
 ### Firmware
 - circuitpython 6.0+
 ### Software

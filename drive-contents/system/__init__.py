@@ -1,34 +1,11 @@
 from tg_gui_core import State, DerivedState, uid
 import hardware
 from hardware import drivers
+from . import applocals, clock
 import time
 import microcontroller
 import gc
 
-_to_month = (
-    "INVALID MONTH",
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "Novemer",
-    "December",
-)
-_to_weekday = (
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-    "Sunday",
-)
 
 # prototype memory monitor
 _mem_monitor_counter = 0
@@ -43,58 +20,6 @@ def _refresh_mem_monitor():
         _mem_monitor.update(None, gc.mem_free())
     # tick counter
     _mem_monitor_counter = (_mem_monitor_counter + 1) % _mem_monitor_refresh_counts
-
-
-# using classes as modules, technically reduces ram size
-class clock:
-    _id_ = uid()
-
-    year = State(0000)
-    month = State(00)
-    weekday = State(0)
-    monthday = State(00)
-    yearday = State(000)
-
-    monthname = DerivedState(
-        month,
-        lambda m: _to_month[((m + 1) % 12) - 1],  # got a month == 25 sometimes
-    )
-    weekdayname = DerivedState(weekday, lambda w: _to_weekday[w])
-
-    hours = State(0)
-    mins = State(0)
-    secs = State(0)
-
-    _time = hours, mins, secs
-    _date = year, month, weekday, monthday, yearday
-    _prev_refresh = drivers.rtc.datetime
-
-    def _refresh_time():
-        global clock
-
-        now = drivers.rtc.datetime
-        hours, mins, secs = clock._time
-
-        # if is 24 hour time:
-        hours.update(clock, now.tm_hour)
-        mins.update(clock, now.tm_min)
-        secs.update(clock, now.tm_sec)
-
-        if clock._prev_refresh.tm_hour > now.tm_hour:
-            clock._refresh_date()
-        clock._prev_refresh = now
-
-    def _refresh_date():
-        global clock
-
-        now = drivers.rtc.datetime
-        year, month, weekday, monthday, yearday = clock._date
-
-        year.update(clock, now.tm_year)
-        month.update(clock, now.tm_mon)
-        monthday.update(clock, now.tm_mday)
-        weekday.update(clock, now.tm_wday)
-        yearday.update(clock, now.tm_yday)
 
 
 class display:
