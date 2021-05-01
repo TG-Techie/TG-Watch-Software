@@ -47,3 +47,63 @@ class _SplitContainer(Container):
                 widget._show_()
 
         self._screen_.on_container_show(self)
+
+
+class HSplit(_SplitContainer):
+    def _form_(self, dim_spec):
+        super(Container, self)._form_(dim_spec)
+
+        sub_height = self.height
+        sub_width = self.width // len(self._widgets)
+
+        sub_size = (sub_width, sub_height)
+
+        for widget in self._nested_:
+
+            widget._form_(
+                sub_size,
+            )
+
+    def _place_(self, pos_spec):
+        super(Container, self)._place_(pos_spec)
+
+        sub_width = self.width // len(self._widgets)
+        sub_y = self.height // 2
+        sub_x_offset = sub_width // 2
+
+        for row, widget in enumerate(self._widgets):
+            if widget is not None:
+                widget._place_(
+                    centerto(sub_width * row + sub_x_offset, sub_y),
+                )
+        self._widgets = None
+
+
+class VSplit(_SplitContainer):
+    def _form_(self, dim_spec):
+        super(Container, self)._form_(dim_spec)
+
+        sub_width = self.width
+        sub_height = self.height // len(self._widgets)
+
+        sub_size = (sub_width, sub_height)
+
+        for widget in self._nested_:
+
+            widget._form_(
+                sub_size,
+            )
+
+    def _place_(self, pos_spec):
+        super(Container, self)._place_(pos_spec)
+
+        sub_height = self.height // len(self._widgets)
+        sub_x = self.width // 2
+        sub_y_offset = sub_height // 2
+
+        for row, widget in enumerate(self._widgets):
+            if widget is not None:
+                widget._place_(
+                    centerto(sub_x, sub_height * row + sub_y_offset),
+                )
+        self._widgets = None
