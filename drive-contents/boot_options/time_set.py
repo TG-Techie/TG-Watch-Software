@@ -1,3 +1,12 @@
+import displayio
+import gc
+import time
+import sys
+
+import oh_shit
+import hardware
+import system
+
 from tg_gui_core import *
 from tg_gui_std.all import *
 from system.applocals import *
@@ -13,9 +22,9 @@ from setup.watchsetup import (
     singleinstance,
 )
 
-import gc
-import sys
-import time
+from setup.watchsetup import screen, display, event_loop
+from setup.system_view import SystemView
+
 import capsuleio
 import supervisor
 from time import struct_time
@@ -27,7 +36,6 @@ from system import clock
 @DisplayioRootWrapper(screen=screen, display=display, size=(240, 240))
 class TimeView(Layout):
     def exit_time_set(self):
-        print("about to reset out of time set")
         capsuleio.bury("0")
         supervisor.reload()
 
@@ -180,25 +188,23 @@ TimeView._superior_._std_startup_()
 gc.collect()
 print(gc.mem_free())
 
-
-def run():
-    gc.collect()
-    try:
-        print(gc.mem_free())
-        while True:
-            gc.collect()
-            system._refresh()
-            event_loop.loop()
-            display.refresh()
-
-    except Exception as err:
+gc.collect()
+try:
+    print(gc.mem_free())
+    while True:
         gc.collect()
-        del WatchRoot, screen
-        sys.print_exception(err)
-        display.show(None)
+        system._refresh()
+        event_loop.loop()
         display.refresh()
-        gc.collect()
-        if isinstance(err, MemoryError):
-            oh_shit.reset_countdown(10, err)
-        else:
-            oh_shit.reset_countdown(30, err)
+
+except Exception as err:
+    gc.collect()
+    del WatchRoot, screen
+    sys.print_exception(err)
+    display.show(None)
+    display.refresh()
+    gc.collect()
+    if isinstance(err, MemoryError):
+        oh_shit.reset_countdown(10, err)
+    else:
+        oh_shit.reset_countdown(30, err)

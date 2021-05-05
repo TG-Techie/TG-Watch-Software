@@ -1,10 +1,9 @@
 import sys
 import oh_shit
 from hardware import drivers
+import capsuleio
 
-print("capsuleio.unearth() =", capsuleio.unearth())
 if not (capsuleio.unearth() in (None, "0")):
-    print("entering time set")
     from boot_options import time_set
 
 if drivers._read_bat_percent() < 4:
