@@ -38,7 +38,7 @@ yearday = State(000)
 
 monthname = DerivedState(
     month,
-    lambda m: _months[((m + 1) % 12) - 1],  # got a month == 25 sometimes
+    lambda m: _months[((m + 1) % 13) - 1],  # got a month == 25 sometimes
 )
 weekdayname = DerivedState(weekday, lambda w: _full_weekdays[w])
 
@@ -75,6 +75,7 @@ def set_24hour_time(
         next["tm_year"] = year
 
     if month is not None:
+        assert 1 <= month <= 12, f"month = must be an int  between 1 and 12"
         next["tm_mon"] = month
 
     if monthday is not None:

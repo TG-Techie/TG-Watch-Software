@@ -180,33 +180,25 @@ TimeView._superior_._std_startup_()
 gc.collect()
 print(gc.mem_free())
 
-try:
-    gc.collect()
-    print(gc.mem_free())
-    while True:
-        gc.collect()
-        # print("loop:", gc.mem_free())
-        # _ in range(30):
-        system._refresh()
-        event_loop.loop()
-        display.refresh()
 
-except Exception as err:
-    gc.enable()
-    print("exiting", err)
-    del TimeView, screen
+def run():
     gc.collect()
-
-    sys.print_exception(err)
     try:
-        with open("error.text", "w") as file:
-            sys.print_exception(err, file=file)
-    except:
-        pass
-    display.show(None)
-    display.refresh()
-    # hardware.deinit()
-    if isinstance(err, MemoryError):
-        oh_shit.reset_countdown(10, err)
-    else:
-        oh_shit.reset_countdown(30, err)
+        print(gc.mem_free())
+        while True:
+            gc.collect()
+            system._refresh()
+            event_loop.loop()
+            display.refresh()
+
+    except Exception as err:
+        gc.collect()
+        del WatchRoot, screen
+        sys.print_exception(err)
+        display.show(None)
+        display.refresh()
+        gc.collect()
+        if isinstance(err, MemoryError):
+            oh_shit.reset_countdown(10, err)
+        else:
+            oh_shit.reset_countdown(30, err)

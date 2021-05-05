@@ -40,7 +40,7 @@ class shade(Pages):
             self.page = self.main_shade
 
     def _hide_(self):
-        print(self, self.page)
+        # print(self, self.page)
         if self.page is self.torch_panel:
             self.page = self.main_shade
         super()._hide_()
@@ -61,7 +61,6 @@ class shade(Pages):
             press=self._superior_.load_time_set(),
         )
 
-        print(f"Layout._decalrable_={Layout._decalrable_}")
         open_torch = Button(
             text="torch",
             radius=ratio(height // 2),

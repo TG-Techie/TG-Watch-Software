@@ -1,6 +1,4 @@
-from hardware import display
-from hardware.drivers import touchscreen, rtc
-from . import splash_screen
+from hardware.drivers import touchscreen, rtc, display
 
 from tg_gui_core import *
 from tg_gui_core.base import Defaults, Palette, Palettes
