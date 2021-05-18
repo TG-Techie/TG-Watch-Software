@@ -10,7 +10,8 @@ import time
 from pulseio import PWMOut
 from digitalio import DigitalInOut
 
-from adafruit_bus_device.i2c_device import I2CDevice, SPIDevice
+from adafruit_bus_device.i2c_device import I2CDevice
+from adafruit_bus_device.spi_device import SPIDevice
 
 from adafruit_ds3231 import DS3231
 from adafruit_focaltouch import Adafruit_FocalTouch
@@ -123,8 +124,12 @@ def init_sensors():
 
         # determine the current I2C device for the haptic devices
         # scan for what adresses are on the bus
-        with I2CDevice(i2c) as port:
-            addrs = port.scan()
+        if i2c.try_lock():
+            addrs = i2c.scan()
+            i2c.unlock()
+        else:
+            raise RuntimeError(f"unable to scan i2c bus")
+
         if 0x5E in addrs:
             haptic = DRV2605(i2c, address=0x5E)
         elif 0x5A in addrs:
