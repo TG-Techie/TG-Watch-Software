@@ -22,6 +22,9 @@
 
 from tg_gui_core import *
 import time
+from time import monotonic_ns
+
+_do_nothing = lambda: None
 
 
 def adjust_phys_to_rel(ref_wid, coord):
@@ -49,9 +52,10 @@ There are four modes for action that is taken on input:
 for now we will stick with just one updateable.
 """
 
-NOTHING_MODE = const(1)
-PRESS_MODE = const(2)
-UPDATE_MODE = const(3)
+_NOTHING_MODE = const(1)
+_PRESS_MODE = const(2)
+_UPDATE_MODE = const(3)
+
 
 class SinglePointEventLoop:
     def __init__(self, *, screen, poll_coord, update_threshold=15):
@@ -59,18 +63,37 @@ class SinglePointEventLoop:
         self._screen = screen
         self._update_threshold = update_threshold
 
+        self._touch_timeouts = {}
+        self._last_touch_timeout = None
+
         # initial state of the loop
         self._was_touched = False
+
+        now = monotonic_ns()
+        self._last_touched = now
+
+        self._then = now
+
         self._start_coord = (-0x1701D, -0x1701D)  # ;-)
         self._last_coord = (-0x1701D, -0x1701D)  # ;-)
 
         self._selected = None
         self._found_pressable = None
         self._found_updateable = None
-        self._mode = NOTHING_MODE
+        self._mode = _NOTHING_MODE
+
+    def add_touch_timeout(self, time, timeout):
+        assert time not in self._touch_timeouts, f"a timeout for {time} already exists"
+        assert (
+            isinstance(time, int) and time > 0
+        ), f"a timeout time must be a whole number, got {time}"
+        self._touch_timeouts[time] = timeout
 
     def loop(self):
-        # print(self._screen._pressables_)
+        global monotonic_ns
+
+        now = monotonic_ns()
+        assert isinstance(now, int), "now"
 
         # get previous data
         was_touched = self._was_touched
@@ -80,8 +103,20 @@ class SinglePointEventLoop:
         coord = self._poll_coord()
         is_touched = bool(coord is not None)
 
+        if is_touched:
+            self._last_touched = now
+            self._last_touch_timeout = None
+        else:
+            round_time_since = (now - self._last_touched) // int(10 ** 9)
+            # print(round_time_since, round_time_since != self._last_touch_timeout, now)
+            if round_time_since != self._last_touch_timeout:
+                global _do_nothing
+                self._last_touch_timeout = round_time_since
+                timeout = self._touch_timeouts.get(round_time_since, _do_nothing)
+                timeout()
+
         if is_touched and not was_touched:  # if finger just went down
-            screen = self._screen # store locally as optimization
+            screen = self._screen  # store locally as optimization
             # scan thought all pointable.selectable widgets then the actionable ones
             for widget in screen._selectbles_:
                 # if the point being touched is in the widget
@@ -106,7 +141,7 @@ class SinglePointEventLoop:
                     self._found_updateable = widget
                     break
 
-            self._mode = NOTHING_MODE if pressable is None else PRESS_MODE
+            self._mode = _NOTHING_MODE if pressable is None else _PRESS_MODE
             self._start_coord = coord
 
         elif not is_touched and was_touched:  # if finger raised
@@ -119,7 +154,7 @@ class SinglePointEventLoop:
 
             pressable = self._found_pressable
             if (
-                mode == PRESS_MODE
+                mode == _PRESS_MODE
                 and pressable is not None
                 and has_phys_coord_in(pressable, self._last_coord)
             ):
@@ -138,7 +173,7 @@ class SinglePointEventLoop:
             mode = self._mode
             updateable = self._found_updateable
             if updateable is not None:
-                if mode != UPDATE_MODE:
+                if mode != _UPDATE_MODE:
                     start_x, start_y = self._start_coord
                     now_x, now_y = coord
                     threshold = self._update_threshold
@@ -147,9 +182,9 @@ class SinglePointEventLoop:
                     diff_y = start_y - now_y
 
                     if abs(diff_x) >= threshold or abs(diff_y) >= threshold:
-                        self._mode = mode = UPDATE_MODE
+                        self._mode = mode = _UPDATE_MODE
 
-                elif mode == UPDATE_MODE:
+                elif mode == _UPDATE_MODE:
                     updateable._update_coord_(adjust_phys_to_rel(updateable, coord))
         else:
             pass
@@ -157,3 +192,4 @@ class SinglePointEventLoop:
         # store current data as next loop's last data
         self._was_touched = is_touched
         self._last_coord = coord
+        self._then = now

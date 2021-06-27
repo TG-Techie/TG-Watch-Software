@@ -54,12 +54,7 @@ class SystemView(Pages):
     face = default_face
     shade = shade
 
-    # app_page = PageState(0)
     apptray = app_widget
-    # apptray = Pages(
-    #     show=app_page,
-    #     pages=(app_widget,),
-    # )
 
     open_stack = []
 
@@ -94,3 +89,8 @@ class SystemView(Pages):
             self.page = topage = self.open_stack.pop(-1)
         else:
             self.page = self.face
+
+    def pop_to_face(self):
+        face = self.face
+        while self.page is not face:
+            self.pop_view()

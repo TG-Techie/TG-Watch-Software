@@ -26,6 +26,8 @@ class display:
     _id_ = uid()
 
     brightness = State(1.0)
+    # is_locked = State(False)
+
     _phys_limits = (
         0.2,  # min
         1.0,  # max
@@ -46,6 +48,12 @@ class display:
         )
 
     brightness._register_handler_(None, _set_brightness)
+
+    # def _lock():
+    #     display.is_locked.update(display, True)
+    #
+    # def _unlock():
+    #     display.is_locked.update(display, False)
 
 
 class power:

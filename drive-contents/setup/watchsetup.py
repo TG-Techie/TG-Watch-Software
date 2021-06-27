@@ -53,6 +53,9 @@ def get_touch_coord():
         return None
 
 
-event_loop = SinglePointEventLoop(screen=screen, poll_coord=get_touch_coord)
+event_loop = SinglePointEventLoop(
+    screen=screen,
+    poll_coord=get_touch_coord,
+)
 
 display.refresh()

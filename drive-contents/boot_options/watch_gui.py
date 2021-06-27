@@ -53,6 +53,9 @@ swipedown._last_coord_ = lambda coord: (
 )
 
 
+system_view = WatchRoot.system_view
+event_loop.add_touch_timeout(25, lambda: system_view.pop_to_face())
+
 WatchRoot._superior_._std_startup_()
 gc.collect()
 print(gc.mem_free())
@@ -70,7 +73,6 @@ def run():
 
     except Exception as err:
         gc.collect()
-        del WatchRoot, screen
         sys.print_exception(err)
         display.show(None)
         display.refresh()

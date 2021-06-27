@@ -11,6 +11,11 @@ from system import clock, power
 @singleinstance
 class default_face(Layout):
 
+    # lock_text = DerivedState(
+    #     system.display.is_locked,
+    #     lambda l: "Locked" if l else "Unlocked",
+    # )
+
     timestr = DerivedState((clock.hours, clock.mins), lambda h, m: f"{h:02}:{m:02}")
     datestr = DerivedState(
         (clock.weekdayname, clock.monthname, clock.monthday),
@@ -28,26 +33,7 @@ class default_face(Layout):
 
     time_lbl = Label(size=7, text=timestr)
     date_lbl = Label(size=3, text=datestr)
-
-    # apps_but = Button(
-    #     text="Apps",
-    #     margin=0,
-    #     size=3,
-    #     radius=ratio(height // 2),
-    #     press=self._superior_.open_page(self._superior_.launcher),
-    #     palette=palette.secondary,
-    #     _y_adj=-5,
-    # )
-    # other_but = Button(
-    #     text="cla",
-    #     margin=0,
-    #     size=3,
-    #     radius=ratio(height // 2),
-    #     press=lambda: self._superior_.app_view.close_app(),
-    #     palette=palette.secondary,
-    #     _y_adj=-5,
-    #     _x_adj=3,
-    # )
+    # lock_indicator = Label(text=lock_text, _alignment=align.leading)
 
     def _wearable_(self):
         launch_size = (self.width // 2, self.height // 4)
@@ -61,3 +47,4 @@ class default_face(Layout):
         # other = self.other_but((left, bottom), launch_size)
 
         self.percent((right, top), (self.width // 3, self.height // 6))
+        # self.lock_indicator((left, top), (2 * self.width // 3, self.height // 6))
