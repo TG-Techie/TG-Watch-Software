@@ -1,17 +1,11 @@
 import sys
 import oh_shit
 from hardware import drivers
+import capsuleio
 
-# # try to import the hardware, this check may not be needed anymore
-# try:
-#     from hardware import drivers
-# except Exception as err:
-#     if "SCK in use" in err.args or "lock timed out" in err.args[0]:
-#         import oh_shit
-#
-#         oh_shit.reset_countdown(30, err)
-#     raise err
-
+msg = capsuleio.unearth()
+if msg not in (None, "0"):
+    from boot_options import time_set
 
 if drivers._read_bat_percent() < 4:
     from boot_options import low_battery

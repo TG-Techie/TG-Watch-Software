@@ -5,10 +5,12 @@ import time
 import system
 from system import display
 from system import _mem_monitor as mem_monitor
+import capsuleio
 
 
 import hardware
 import microcontroller
+import supervisor
 
 
 def _should_be_sys_reset():
@@ -43,6 +45,11 @@ class shade(Pages):
             self.page = self.main_shade
         super()._hide_()
 
+    def load_time_set(self):
+        print("about to reset into time set")
+        capsuleio.bury("1")
+        supervisor.reload()
+
     @singleinstance
     class main_shade(Layout):
 
@@ -51,7 +58,7 @@ class shade(Pages):
         open_time = Button(
             text="time",
             radius=ratio(height // 2),
-            press=lambda: None,
+            press=self._superior_.load_time_set(),
         )
 
         open_torch = Button(
